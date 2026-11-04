@@ -1,0 +1,10 @@
+{
+  "name": "bengaluru-startup-jobs",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n FRONTEND,BACKEND -c blue,green \"pnpm --dir frontend dev\" \"cd backend && .venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

@@ -1,0 +1,45 @@
+[
+  {
+    "company": {
+      "name": "Example Tech Bengaluru",
+      "slug": "example-tech-blr",
+      "website": "https://exampletech.in",
+      "description": "Developer platform for next-generation distributed systems and spatial computing.",
+      "logo_url": "https://exampletech.in/assets/logo.svg",
+      "industry": "Developer Tools",
+      "company_size": "51-200",
+      "founded_year": 2021,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "123, 100 Feet Road, 4th Block, Koramangala",
+        "locality": "Koramangala",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560034",
+        "latitude": 12.9345,
+        "longitude": 77.6258
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Senior Backend Engineer",
+        "slug": "example-tech-senior-backend-engineer",
+        "description": "Design and build fault-tolerant microservices using Python, FastAPI, and PostgreSQL.",
+        "employment_type": "full-time",
+        "experience_level": "senior",
+        "salary_min": 2500000,
+        "salary_max": 3800000,
+        "currency": "INR",
+        "skills": ["Python", "FastAPI", "PostgreSQL", "Docker", "AWS"],
+        "application_url": "https://exampletech.in/careers/senior-backend",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://exampletech.in/careers",
+        "posted_at": "2026-10-30T00:00:00Z",
+        "expires_at": null
+      }
+    ]
+  }
+]

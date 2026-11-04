@@ -1,0 +1,848 @@
+{
+  "peenya|560058": [
+    13.0330515,
+    77.5332233,
+    "nominatim_osm",
+    "high"
+  ],
+  "yeshwanthpur|560022": [
+    13.0187744,
+    77.5552931,
+    "nominatim_osm",
+    "high"
+  ],
+  "vijayanagar|560040": [
+    12.9709537,
+    77.5373851,
+    "nominatim_osm",
+    "high"
+  ],
+  "bannerghatta road|560068": [
+    12.9040153,
+    77.601695,
+    "nominatim_osm",
+    "high"
+  ],
+  "museum road|560025": [
+    12.9713517,
+    77.6046225,
+    "nominatim_osm",
+    "high"
+  ],
+  "hsr layout|560102": [
+    12.9116225,
+    77.6388622,
+    "nominatim_osm",
+    "high"
+  ],
+  "hbr layout|560077": [
+    13.031992,
+    77.6280789,
+    "nominatim_osm",
+    "high"
+  ],
+  "jp nagar 1st-6th phase|560078": [
+    12.9081,
+    77.5959,
+    "locality_centroid",
+    "high"
+  ],
+  "aecs layout|560037": [
+    12.964118,
+    77.7130369,
+    "nominatim_osm",
+    "high"
+  ],
+  "malleshwaram|560055": [
+    13.0027353,
+    77.5703253,
+    "nominatim_osm",
+    "high"
+  ],
+  "jp nagar|560078": [
+    12.9096941,
+    77.5866067,
+    "nominatim_osm",
+    "high"
+  ],
+  "kalyan nagar|560043": [
+    13.0221416,
+    77.6403368,
+    "nominatim_osm",
+    "high"
+  ],
+  "kengeri|560074": [
+    12.9176571,
+    77.4837568,
+    "nominatim_osm",
+    "high"
+  ],
+  "mahalakshmipuram|560086": [
+    13.0012021,
+    77.5460235,
+    "nominatim_osm",
+    "high"
+  ],
+  "doddakallasandra|560062": [
+    12.8846862,
+    77.552751,
+    "nominatim_osm",
+    "high"
+  ],
+  "yelahanka|560064": [
+    13.1006982,
+    77.5963454,
+    "nominatim_osm",
+    "high"
+  ],
+  "bannerghatta road|560076": [
+    12.8873229,
+    77.5970052,
+    "nominatim_osm",
+    "high"
+  ],
+  "nandini layout|560096": [
+    13.0125961,
+    77.5333145,
+    "nominatim_osm",
+    "high"
+  ],
+  "lavelle road|560001": [
+    12.9712,
+    77.5976,
+    "locality_centroid",
+    "high"
+  ],
+  "yelahanka new town|560064": [
+    13.1007,
+    77.5963,
+    "locality_centroid",
+    "high"
+  ],
+  "koramangala|560095": [
+    12.9352,
+    77.6245,
+    "locality_centroid",
+    "high"
+  ],
+  "banashankari|560070": [
+    12.9255,
+    77.5468,
+    "pincode_centroid",
+    "medium"
+  ],
+  "mahadevapura|560048": [
+    12.9922,
+    77.6974,
+    "locality_centroid",
+    "high"
+  ],
+  "rajajinagar|560010": [
+    12.9898,
+    77.5542,
+    "locality_centroid",
+    "high"
+  ],
+  "bommanahalli|560068": [
+    12.9063,
+    77.6186,
+    "pincode_centroid",
+    "medium"
+  ],
+  "chickpet|560002": [
+    12.9647,
+    77.576,
+    "pincode_centroid",
+    "medium"
+  ],
+  "indiranagar|560038": [
+    12.9719,
+    77.6412,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560045": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "hsr layout sector 1-7|560102": [
+    12.9121,
+    77.6446,
+    "locality_centroid",
+    "high"
+  ],
+  "rajarajeshwari nagar|560098": [
+    12.9112,
+    77.5112,
+    "pincode_centroid",
+    "medium"
+  ],
+  "viswaneedam|560091": [
+    12.9912,
+    77.4812,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560035": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "rt nagar|560032": [
+    13.0245,
+    77.5912,
+    "pincode_centroid",
+    "medium"
+  ],
+  "hsr|560102": [
+    12.9121,
+    77.6446,
+    "locality_centroid",
+    "high"
+  ],
+  "whitefield|560066": [
+    12.9698,
+    77.7499,
+    "locality_centroid",
+    "high"
+  ],
+  "gokula extension|560054": [
+    13.0298,
+    77.5456,
+    "pincode_centroid",
+    "medium"
+  ],
+  "jayanagar|560011": [
+    12.9299,
+    77.5833,
+    "locality_centroid",
+    "high"
+  ],
+  "mg road|560001": [
+    12.9784,
+    77.6015,
+    "locality_centroid",
+    "high"
+  ],
+  "yelahanka|560097": [
+    13.1007,
+    77.5963,
+    "locality_centroid",
+    "high"
+  ],
+  "basaveshwaranagar|560079": [
+    12.9876,
+    77.5312,
+    "pincode_centroid",
+    "medium"
+  ],
+  "peenya|560022": [
+    13.0285,
+    77.5195,
+    "locality_centroid",
+    "high"
+  ],
+  "kammanahalli|560084": [
+    13.0012,
+    77.6212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "electronic city phase 1|560100": [
+    12.8452,
+    77.6602,
+    "locality_centroid",
+    "high"
+  ],
+  "sanjayanagar|560094": [
+    12.9299,
+    77.5833,
+    "locality_centroid",
+    "high"
+  ],
+  "gm palya|560093": [
+    12.9812,
+    77.6612,
+    "pincode_centroid",
+    "medium"
+  ],
+  "marathahalli|560037": [
+    12.9591,
+    77.6974,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560063": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "hebbal|560024": [
+    13.0359,
+    77.597,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560033": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "kengeri|560056": [
+    12.9176,
+    77.4837,
+    "locality_centroid",
+    "high"
+  ],
+  "vimanapura|560017": [
+    12.9559,
+    77.6632,
+    "pincode_centroid",
+    "medium"
+  ],
+  "btm layout|560076": [
+    12.9166,
+    77.6101,
+    "locality_centroid",
+    "high"
+  ],
+  "varthur|560087": [
+    12.9412,
+    77.7123,
+    "pincode_centroid",
+    "medium"
+  ],
+  "kengeri|560098": [
+    12.9176,
+    77.4837,
+    "locality_centroid",
+    "high"
+  ],
+  "kathriguppe|560085": [
+    12.9312,
+    77.5412,
+    "pincode_centroid",
+    "medium"
+  ],
+  "ramamurthy nagar|560016": [
+    13.0076,
+    77.6698,
+    "pincode_centroid",
+    "medium"
+  ],
+  "hanumanthnagar|560019": [
+    12.9416,
+    77.5617,
+    "pincode_centroid",
+    "medium"
+  ],
+  "kammanahalli|560043": [
+    13.0163,
+    77.6582,
+    "pincode_centroid",
+    "medium"
+  ],
+  "cv raman nagar|560075": [
+    12.9734,
+    77.6612,
+    "locality_centroid",
+    "high"
+  ],
+  "electronic city|560100": [
+    12.8452,
+    77.6602,
+    "locality_centroid",
+    "high"
+  ],
+  "hsr layout|560064": [
+    12.9121,
+    77.6446,
+    "locality_centroid",
+    "high"
+  ],
+  "subramanyapura|560061": [
+    12.9023,
+    77.5412,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560057": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "rajajinagar|560086": [
+    12.9898,
+    77.5542,
+    "locality_centroid",
+    "high"
+  ],
+  "jp nagar|560076": [
+    12.9081,
+    77.5959,
+    "locality_centroid",
+    "high"
+  ],
+  "virgonagar|560049": [
+    13.0212,
+    77.7123,
+    "pincode_centroid",
+    "medium"
+  ],
+  "frazer town|560005": [
+    12.9912,
+    77.6134,
+    "pincode_centroid",
+    "medium"
+  ],
+  "jayanagar|560070": [
+    12.9299,
+    77.5833,
+    "locality_centroid",
+    "high"
+  ],
+  "nagarbhavi|560072": [
+    12.9812,
+    77.5123,
+    "pincode_centroid",
+    "medium"
+  ],
+  "mahadevapura|560016": [
+    12.9922,
+    77.6974,
+    "locality_centroid",
+    "high"
+  ],
+  "jayanagar|560017": [
+    12.9299,
+    77.5833,
+    "locality_centroid",
+    "high"
+  ],
+  "indiranagar|560073": [
+    12.9719,
+    77.6412,
+    "locality_centroid",
+    "high"
+  ],
+  "bangalore university|560056": [
+    12.9612,
+    77.5012,
+    "pincode_centroid",
+    "medium"
+  ],
+  "kr puram|560036": [
+    13.0039,
+    77.6912,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560065": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "shivajinagar|560051": [
+    12.9876,
+    77.6012,
+    "pincode_centroid",
+    "medium"
+  ],
+  "ejipura|560047": [
+    12.9621,
+    77.6134,
+    "pincode_centroid",
+    "medium"
+  ],
+  "sahakar nagar|560092": [
+    13.0612,
+    77.5812,
+    "pincode_centroid",
+    "medium"
+  ],
+  "chamrajpet|560018": [
+    12.9575,
+    77.5512,
+    "pincode_centroid",
+    "medium"
+  ],
+  "peenya 2nd stage|560058": [
+    13.0285,
+    77.5195,
+    "locality_centroid",
+    "high"
+  ],
+  "kundalahalli|560037": [
+    12.9591,
+    77.6974,
+    "pincode_centroid",
+    "medium"
+  ],
+  "frazer town east|560084": [
+    13.0012,
+    77.6212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "electronic city phase 2|560105": [
+    12.8452,
+    77.6602,
+    "locality_centroid",
+    "high"
+  ],
+  "btm|560076": [
+    12.9166,
+    77.6101,
+    "locality_centroid",
+    "high"
+  ],
+  "banashankari|560085": [
+    12.9312,
+    77.5412,
+    "pincode_centroid",
+    "medium"
+  ],
+  "yelahanka|560068": [
+    13.1007,
+    77.5963,
+    "locality_centroid",
+    "high"
+  ],
+  "domlur|560071": [
+    12.9621,
+    77.6412,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560023": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "aecs layout|560068": [
+    12.9063,
+    77.6186,
+    "pincode_centroid",
+    "medium"
+  ],
+  "ashoknagar|560050": [
+    12.9387,
+    77.5512,
+    "pincode_centroid",
+    "medium"
+  ],
+  "halasuru bazar|560042": [
+    12.9867,
+    77.6212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "koramangala 4th block|560034": [
+    12.9352,
+    77.6245,
+    "locality_centroid",
+    "high"
+  ],
+  "vasanth nagar|560052": [
+    12.9854,
+    77.5876,
+    "pincode_centroid",
+    "medium"
+  ],
+  "basavanagudi|560004": [
+    12.9421,
+    77.5753,
+    "locality_centroid",
+    "high"
+  ],
+  "koramangala|560034": [
+    12.9352,
+    77.6245,
+    "locality_centroid",
+    "high"
+  ],
+  "bannerghatta road|560029": [
+    12.8913,
+    77.5976,
+    "locality_centroid",
+    "high"
+  ],
+  "bannerghatta|560083": [
+    12.8913,
+    77.5976,
+    "locality_centroid",
+    "high"
+  ],
+  "outer ring road|560037": [
+    12.926,
+    77.6762,
+    "locality_centroid",
+    "high"
+  ],
+  "bagalakunte|560073": [
+    13.0512,
+    77.4912,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bellandur|560103": [
+    12.926,
+    77.6762,
+    "locality_centroid",
+    "high"
+  ],
+  "vasanth nagar|560020": [
+    12.9918,
+    77.5772,
+    "pincode_centroid",
+    "medium"
+  ],
+  "seshadripuram|560020": [
+    12.9918,
+    77.5772,
+    "pincode_centroid",
+    "medium"
+  ],
+  "shanthi nagar|560025": [
+    12.9698,
+    77.6074,
+    "pincode_centroid",
+    "medium"
+  ],
+  "residency road|560025": [
+    12.9698,
+    77.6074,
+    "pincode_centroid",
+    "medium"
+  ],
+  "kaval byrasandra|560026": [
+    12.9538,
+    77.5385,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560028": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "rajajinagar|560055": [
+    12.9898,
+    77.5542,
+    "locality_centroid",
+    "high"
+  ],
+  "kr puram|560049": [
+    13.0212,
+    77.7123,
+    "pincode_centroid",
+    "medium"
+  ],
+  "ulsoor|560042": [
+    12.9867,
+    77.6212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "malleshwaram|560003": [
+    13.0031,
+    77.5643,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560009": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "bengaluru|560114": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "bengaluru|560059": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "kadugodi|560067": [
+    13.0012,
+    77.7612,
+    "pincode_centroid",
+    "medium"
+  ],
+  "rajajinagar|560021": [
+    12.9898,
+    77.5542,
+    "locality_centroid",
+    "high"
+  ],
+  "shanti nagar|560027": [
+    12.9612,
+    77.5961,
+    "pincode_centroid",
+    "medium"
+  ],
+  "sarjapur road|560035": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "tavarekere|560029": [
+    12.9344,
+    77.6101,
+    "pincode_centroid",
+    "medium"
+  ],
+  "ulsoor|560008": [
+    12.9817,
+    77.6285,
+    "pincode_centroid",
+    "medium"
+  ],
+  "btm layout|560029": [
+    12.9166,
+    77.6101,
+    "locality_centroid",
+    "high"
+  ],
+  "srirampuram|560021": [
+    12.9956,
+    77.5654,
+    "pincode_centroid",
+    "medium"
+  ],
+  "devarabisanahalli|560103": [
+    12.926,
+    77.6762,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560300": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "bengaluru|560046": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "vidyaranyapura|560097": [
+    13.0712,
+    77.5312,
+    "pincode_centroid",
+    "medium"
+  ],
+  "whitefield|560048": [
+    12.9698,
+    77.7499,
+    "locality_centroid",
+    "high"
+  ],
+  "indiranagar|560071": [
+    12.9719,
+    77.6412,
+    "locality_centroid",
+    "high"
+  ],
+  "hebbal|560092": [
+    13.0359,
+    77.597,
+    "locality_centroid",
+    "high"
+  ],
+  "hebbal|560032": [
+    13.0359,
+    77.597,
+    "locality_centroid",
+    "high"
+  ],
+  "bengaluru|560082": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "hoodi|560048": [
+    12.9922,
+    77.6974,
+    "pincode_centroid",
+    "medium"
+  ],
+  "chikkabanavara|560090": [
+    13.0612,
+    77.5212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "bengaluru|560013": [
+    12.9784,
+    77.6015,
+    "bengaluru_default_centroid",
+    "low"
+  ],
+  "basavanagudi|560002": [
+    12.9421,
+    77.5753,
+    "locality_centroid",
+    "high"
+  ],
+  "electronic city phase 2|560100": [
+    12.8452,
+    77.6602,
+    "locality_centroid",
+    "high"
+  ],
+  "koramangala|560030": [
+    12.9352,
+    77.6245,
+    "locality_centroid",
+    "high"
+  ],
+  "bommasandra industrial area|560099": [
+    12.8212,
+    77.6812,
+    "pincode_centroid",
+    "medium"
+  ],
+  "halasuru|560042": [
+    12.9867,
+    77.6212,
+    "pincode_centroid",
+    "medium"
+  ],
+  "jayanagar|560082": [
+    12.9299,
+    77.5833,
+    "locality_centroid",
+    "high"
+  ],
+  "hsr layout|560101": [
+    12.9121,
+    77.6446,
+    "locality_centroid",
+    "high"
+  ],
+  "manyata tech park|560045": [
+    13.0489,
+    77.62,
+    "locality_centroid",
+    "high"
+  ]
+}

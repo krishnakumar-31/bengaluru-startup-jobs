@@ -1,0 +1,338 @@
+[
+  {
+    "company": {
+      "name": "Zerodha",
+      "slug": "zerodha",
+      "website": "https://zerodha.com",
+      "description": "India's largest retail stockbroker offering low-cost trading across equities, commodities, and currencies through innovative technology.",
+      "logo_url": "https://zerodha.com/static/images/logo.svg",
+      "industry": "FinTech",
+      "company_size": "1001-5000",
+      "founded_year": 2010,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "153/154, 4th Cross, Dollars Colony, 4th Phase, J.P. Nagar",
+        "locality": "JP Nagar",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560078",
+        "latitude": 12.9081,
+        "longitude": 77.5959
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Python Software Developer",
+        "slug": "zerodha-python-developer",
+        "description": "Build scalable high-throughput order execution, financial ledger systems, and low-latency APIs in Python and PostgreSQL.",
+        "employment_type": "full-time",
+        "experience_level": "mid",
+        "salary_min": 1600000,
+        "salary_max": 2600000,
+        "currency": "INR",
+        "skills": ["Python", "PostgreSQL", "Redis", "Kafka", "Linux"],
+        "application_url": "https://zerodha.com/careers/python-dev",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://zerodha.com/careers",
+        "posted_at": "2026-10-15T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Hasura",
+      "slug": "hasura",
+      "website": "https://hasura.io",
+      "description": "Instant GraphQL and REST APIs on PostgreSQL, MySQL, and modern databases with fine-grained access control.",
+      "logo_url": "https://hasura.io/brand-assets/hasura-logo-primary.svg",
+      "industry": "Developer Tools",
+      "company_size": "201-500",
+      "founded_year": 2017,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "80 Feet Road, 4th Block, Koramangala",
+        "locality": "Koramangala",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560034",
+        "latitude": 12.9345,
+        "longitude": 77.6258
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Platform Infrastructure Engineer",
+        "slug": "hasura-platform-infrastructure-engineer",
+        "description": "Architect and maintain global Kubernetes clusters, data connectors, and high-availability cloud infrastructure.",
+        "employment_type": "full-time",
+        "experience_level": "senior",
+        "salary_min": 2800000,
+        "salary_max": 4200000,
+        "currency": "INR",
+        "skills": ["Go", "Kubernetes", "PostgreSQL", "Docker", "GraphQL"],
+        "application_url": "https://hasura.io/careers/platform-infra",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://hasura.io/careers/",
+        "posted_at": "2026-10-18T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Postman",
+      "slug": "postman",
+      "website": "https://www.postman.com",
+      "description": "Leading enterprise API development platform simplifying each step of the API lifecycle and streamlining collaboration.",
+      "logo_url": "https://www.postman.com/assets/logos/postman-logo-icon.svg",
+      "industry": "Developer Tools",
+      "company_size": "1001-5000",
+      "founded_year": 2014,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "9th Floor, Tower B, Prestige Tech Park, Marathahalli-Sarjapur Outer Ring Road",
+        "locality": "Bellandur",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560103",
+        "latitude": 12.9372,
+        "longitude": 77.6918
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Senior Full Stack Engineer",
+        "slug": "postman-senior-full-stack-engineer",
+        "description": "Design, build, and maintain core collaborative workspace features and API client runtime in Node.js and React.",
+        "employment_type": "full-time",
+        "experience_level": "senior",
+        "salary_min": 3000000,
+        "salary_max": 4500000,
+        "currency": "INR",
+        "skills": ["TypeScript", "Node.js", "React", "PostgreSQL", "REST APIs"],
+        "application_url": "https://www.postman.com/company/careers/senior-full-stack",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://www.postman.com/company/careers/",
+        "posted_at": "2026-10-20T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Razorpay",
+      "slug": "razorpay",
+      "website": "https://razorpay.com",
+      "description": "Full-stack payment solution enabling businesses in India to accept, process, and disburse payments seamlessly.",
+      "logo_url": "https://razorpay.com/assets/razorpay-logo.svg",
+      "industry": "FinTech",
+      "company_size": "1001-5000",
+      "founded_year": 2014,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "1st Floor, SJR Cyber, 22 Laskar Hosur Road, Adugodi",
+        "locality": "Koramangala",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560030",
+        "latitude": 12.9392,
+        "longitude": 77.6108
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Backend Engineer - Payments Gateway",
+        "slug": "razorpay-backend-engineer-payments-gateway",
+        "description": "Build scalable distributed payment systems processing millions of transactions daily with five-nines reliability.",
+        "employment_type": "full-time",
+        "experience_level": "mid",
+        "salary_min": 2200000,
+        "salary_max": 3500000,
+        "currency": "INR",
+        "skills": ["Go", "PHP", "MySQL", "Kafka", "AWS"],
+        "application_url": "https://razorpay.com/jobs/backend-payments",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://razorpay.com/jobs/",
+        "posted_at": "2026-10-22T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Swiggy",
+      "slug": "swiggy",
+      "website": "https://www.swiggy.com",
+      "description": "India's leading on-demand convenience platform connecting consumers to thousands of restaurants and stores.",
+      "logo_url": "https://res.cloudinary.com/swiggy/image/upload/fl_lossy,f_auto,q_auto/portal/m/logo_192x192.png",
+      "industry": "Consumer Tech",
+      "company_size": "5001+",
+      "founded_year": 2014,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "Embassy TechVillage, Outer Ring Road, Devarabisanahalli",
+        "locality": "Bellandur",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560103",
+        "latitude": 12.9279,
+        "longitude": 77.6832
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Machine Learning Engineer - Logistics",
+        "slug": "swiggy-machine-learning-engineer-logistics",
+        "description": "Develop real-time delivery dispatch algorithms, travel time estimations, and demand prediction models.",
+        "employment_type": "full-time",
+        "experience_level": "senior",
+        "salary_min": 3200000,
+        "salary_max": 4800000,
+        "currency": "INR",
+        "skills": ["Python", "PyTorch", "Spark", "Kubernetes", "Optimization"],
+        "application_url": "https://careers.swiggy.com/jobs/mle-logistics",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://careers.swiggy.com/",
+        "posted_at": "2026-10-24T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "CRED",
+      "slug": "cred",
+      "website": "https://cred.club",
+      "description": "Rewarding community of creditworthy individuals offering high-trust financial services and lifestyle experiences.",
+      "logo_url": "https://web-assets.cred.club/assets/images/cred-logo.png",
+      "industry": "FinTech",
+      "company_size": "501-1000",
+      "founded_year": 2018,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "1204, 100 Feet Rd, HAL 2nd Stage, Indiranagar",
+        "locality": "Indiranagar",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560038",
+        "latitude": 12.9719,
+        "longitude": 77.6412
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Frontend Engineer - Design Systems",
+        "slug": "cred-frontend-engineer-design-systems",
+        "description": "Craft pixel-perfect, performant micro-interactions and UI systems for Android, iOS, and Web.",
+        "employment_type": "full-time",
+        "experience_level": "mid",
+        "salary_min": 2400000,
+        "salary_max": 3600000,
+        "currency": "INR",
+        "skills": ["React Native", "TypeScript", "React", "Design Systems", "Animation"],
+        "application_url": "https://cred.club/careers/frontend-design-systems",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://cred.club/careers",
+        "posted_at": "2026-10-25T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Slice",
+      "slug": "slice",
+      "website": "https://www.sliceit.com",
+      "description": "Consumer fintech company modernizing payments, UPI, and banking products for Indian digital natives.",
+      "logo_url": "https://www.sliceit.com/assets/slice-logo.svg",
+      "industry": "FinTech",
+      "company_size": "501-1000",
+      "founded_year": 2016,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "748, 80 Feet Road, 4th Block, Koramangala",
+        "locality": "Koramangala",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560034",
+        "latitude": 12.9338,
+        "longitude": 77.6253
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Site Reliability Engineer",
+        "slug": "slice-site-reliability-engineer",
+        "description": "Maintain multi-cloud Kubernetes clusters, observability stacks, and infrastructure automation.",
+        "employment_type": "full-time",
+        "experience_level": "mid",
+        "salary_min": 2000000,
+        "salary_max": 3200000,
+        "currency": "INR",
+        "skills": ["Terraform", "Kubernetes", "AWS", "Prometheus", "Python"],
+        "application_url": "https://www.sliceit.com/careers/sre",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://www.sliceit.com/careers",
+        "posted_at": "2026-10-26T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "company": {
+      "name": "Meesho",
+      "slug": "meesho",
+      "website": "https://www.meesho.io",
+      "description": "Zero-commission internet commerce marketplace empowering millions of small businesses and individual entrepreneurs across India.",
+      "logo_url": "https://www.meesho.io/img/meesho-logo.svg",
+      "industry": "E-Commerce",
+      "company_size": "1001-5000",
+      "founded_year": 2015,
+      "is_verified": true
+    },
+    "offices": [
+      {
+        "address": "06-105-106, 06-107, 3rd Floor, Outer Ring Road, Bellandur",
+        "locality": "Bellandur",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560103",
+        "latitude": 12.9260,
+        "longitude": 77.6762
+      }
+    ],
+    "jobs": [
+      {
+        "title": "Data Platform Engineer",
+        "slug": "meesho-data-platform-engineer",
+        "description": "Build real-time streaming data infrastructure, lakehouse pipelines, and analytics query engines at petabyte scale.",
+        "employment_type": "full-time",
+        "experience_level": "senior",
+        "salary_min": 2800000,
+        "salary_max": 4400000,
+        "currency": "INR",
+        "skills": ["Java", "Scala", "Apache Spark", "Apache Kafka", "Trino"],
+        "application_url": "https://meesho.io/careers/data-platform-eng",
+        "status": "active",
+        "source_name": "company_careers",
+        "source_url": "https://meesho.io/careers",
+        "posted_at": "2026-10-27T00:00:00Z"
+      }
+    ]
+  }
+]
