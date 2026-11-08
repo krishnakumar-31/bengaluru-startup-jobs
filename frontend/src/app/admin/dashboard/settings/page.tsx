@@ -8,11 +8,12 @@ import {
   UserCheck,
   AlertCircle,
   CheckCircle2,
-  Loader2,
   ShieldAlert,
 } from "lucide-react";
 import { useAdminAuth } from "@/lib/admin-auth";
 import { adminChangePassword } from "@/lib/admin-api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function AdminSettingsPage() {
   const { admin, refreshProfile } = useAdminAuth();
@@ -58,22 +59,27 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-emerald-400" />
-          Super Admin Security & Settings
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-indigo-400" />
+            Super Admin Security &amp; Settings
+          </h2>
+          <Badge variant="indigo" size="sm">
+            Protected Session
+          </Badge>
+        </div>
         <p className="text-xs text-slate-400 mt-1">
           Manage the dedicated Single Super Admin account, rotate credentials, and inspect security parameters.
         </p>
       </div>
 
       {/* Account Info Card */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 space-y-4 shadow-xl">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 space-y-5 shadow-xl">
         <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
             <UserCheck className="h-5 w-5" />
           </div>
           <div>
@@ -84,51 +90,51 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-          <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
-            <span className="text-[11px] text-slate-400 block">Username</span>
-            <span className="text-sm font-semibold text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 block font-medium">Username</span>
+            <span className="text-sm font-bold text-white font-mono">
               {admin?.username || "admin"}
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
-            <span className="text-[11px] text-slate-400 block">Account Status</span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Active & Protected
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 block font-medium">Account Status</span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              Active &amp; Protected
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1">
-            <span className="text-[11px] text-slate-400 block">Last Login Time</span>
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 block font-medium">Last Login Timestamp</span>
             <span className="text-xs font-medium text-slate-300">
               {admin?.last_login_at
                 ? new Date(admin.last_login_at).toLocaleString()
-                : "Active session"}
+                : "Active current session"}
             </span>
           </div>
         </div>
       </div>
 
       {/* Security Architecture Overview */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-3.5 backdrop-blur-md">
+        <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400">
           <ShieldAlert className="h-4 w-4" />
-          <span>Active Security Mechanisms</span>
+          <span>Active Security Protections &amp; Policy</span>
         </div>
-        <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
+        <ul className="text-xs text-slate-300 space-y-2.5 list-disc list-inside">
           <li>
-            <strong>HttpOnly Session Cookies:</strong> Tokens are never exposed to JavaScript storage, guarding against XSS attacks.
+            <strong>HttpOnly Session Cookies:</strong> Tokens are never accessible by JavaScript storage (no localStorage/sessionStorage), guarding against XSS attacks.
           </li>
           <li>
-            <strong>Strict CSRF Verification:</strong> Every state-changing request (POST, PUT, PATCH, DELETE) validates double-submit tokens.
+            <strong>Strict CSRF Verification:</strong> Every state-changing request (POST, PUT, PATCH, DELETE) validates double-submit anti-CSRF tokens.
           </li>
           <li>
             <strong>Brute-Force Rate Limiting:</strong> Automatic temporary lockout triggered after 5 consecutive failed login attempts.
           </li>
           <li>
-            <strong>Session Revocation:</strong> Rotating your password updates the database <code className="text-emerald-400 font-mono text-[11px]">token_version</code>, invalidating any active sessions across devices.
+            <strong>Session Revocation:</strong> Rotating your password updates the database <code className="text-indigo-400 font-mono text-[11px] bg-slate-800 px-1 py-0.5 rounded">token_version</code>, invalidating all existing sessions across devices immediately.
           </li>
         </ul>
       </div>
@@ -139,7 +145,7 @@ export default function AdminSettingsPage() {
         className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 space-y-5 shadow-xl"
       >
         <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-          <KeyRound className="h-4 w-4 text-emerald-400" />
+          <KeyRound className="h-4 w-4 text-indigo-400" />
           <h3 className="text-sm font-bold text-white">Rotate Super Admin Password</h3>
         </div>
 
@@ -159,66 +165,63 @@ export default function AdminSettingsPage() {
 
         <div className="space-y-4 max-w-md">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Current Password <span className="text-emerald-400">*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="Enter current password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
+            <label className="text-xs font-semibold text-slate-300">Current Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="password"
+                required
+                placeholder="Enter existing password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              New Super Admin Password <span className="text-emerald-400">*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="Minimum 6 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
+            <label className="text-xs font-semibold text-slate-300">New Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Minimum 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Confirm New Password <span className="text-emerald-400">*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="Re-enter new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-            />
+            <label className="text-xs font-semibold text-slate-300">Confirm New Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Re-type new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold hover:brightness-110 transition disabled:opacity-50 shadow-md shadow-emerald-500/20"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Updating Password...</span>
-              </>
-            ) : (
-              <>
-                <Lock className="h-4 w-4" />
-                <span>Update Password</span>
-              </>
-            )}
-          </button>
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={saving}
+              icon={<KeyRound className="h-4 w-4" />}
+            >
+              Update Super Admin Password
+            </Button>
+          </div>
         </div>
       </form>
     </div>

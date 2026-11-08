@@ -50,6 +50,14 @@ class MCAPreviewCompany(BaseModel):
         None,
         description="Details explaining why record was flagged as duplicate"
     )
+    entity_classification: Optional[str] = Field(
+        "uncertain_for_review",
+        description="Classification: 'startup', 'established_company', 'uncertain_for_review'"
+    )
+    classification_reason: Optional[str] = Field(
+        None,
+        description="Rule explanation for startup vs established vs uncertain classification"
+    )
 
 
 class MCAPreviewSummary(BaseModel):
@@ -67,5 +75,8 @@ class MCAPreviewSummary(BaseModel):
     address_level_count: int = 0
     locality_centroid_count: int = 0
     manual_verification_count: int = 0
+    startup_count: int = 0
+    established_company_count: int = 0
+    uncertain_for_review_count: int = 0
     database_modified: bool = False
     items: List[MCAPreviewCompany]

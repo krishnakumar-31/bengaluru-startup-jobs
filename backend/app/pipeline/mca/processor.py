@@ -156,6 +156,78 @@ def map_industry(classification: Optional[str]) -> str:
     return INDUSTRY_CLASSIFICATION_MAP.get(norm, classification.title())
 
 
+# Keyword lexicons for entity classification (Requirement 6 & 7: Do not classify all MCA companies as startups)
+TECH_KEYWORDS = {
+    "tech", "technology", "technologies", "software", "systems", "solutions", "digital",
+    "labs", "lab", "analytics", "data", "ai", "artificial intelligence", "cloud", "cyber",
+    "fintech", "edtech", "healthtech", "biotech", "robotics", "automation", "networks",
+    "platform", "platforms", "saas", "iot", "mobility", "app", "apps", "informatics",
+    "telecom", "semiconductor", "comput", "infotech", "interactive", "media tech", "ventures",
+    "hydrosystems", "energy tech", "nanotech", "web", "devops", "intelligence"
+}
+
+TRADITIONAL_KEYWORDS = {
+    "construction", "builders", "infra", "infrastructure", "developers", "estates",
+    "brick", "cement", "concrete", "granite", "marble", "quarry", "stone",
+    "trading", "traders", "trade", "imports", "exports", "enterprises", "distributors",
+    "steel", "metals", "iron", "minerals", "pipes", "alloys", "foundry",
+    "textiles", "garments", "fabrics", "apparel", "silk", "cotton", "weaving",
+    "saw mill", "timber", "plywood", "wood", "furniture",
+    "transport", "trucking", "logistics", "carriers", "cabs", "travels", "freight",
+    "hotel", "hospitality", "resort", "restaurant", "caterers", "food court",
+    "farming", "poultry", "plantation", "dairy", "agro", "feed",
+    "printing", "press", "packaging", "corrugat",
+    "automobile", "motors", "garage", "spares",
+    "fertilizers", "pesticides", "mills", "jewellers", "jewellery", "gold", "bullion",
+    "chemicals"
+}
+
+
+def classify_company_entity(
+    name: str,
+    legal_name: str,
+    mca_sector: Optional[str] = None,
+    founded_year: Optional[int] = None,
+) -> Tuple[str, str]:
+    """
+    Classifies an MCA company candidate into one of three distinct categories:
+    1. 'startup': Technology-driven, digital platform, software, SaaS, or high-tech product entity.
+    2. 'established_company': Traditional brick-and-mortar, civil construction, heavy trade, manufacturing, or conventional transport.
+    3. 'uncertain_for_review': Generic business services or ambiguous indicators requiring human administrative review.
+    
+    Returns:
+        (classification, reason)
+    """
+    text = f"{name} {legal_name}".lower()
+    sector = (mca_sector or "").lower()
+
+    has_trad_kw = any(kw in text for kw in TRADITIONAL_KEYWORDS)
+    has_tech_kw = any(kw in text for kw in TECH_KEYWORDS)
+
+    # 1. Traditional strong indicators
+    if has_trad_kw and not has_tech_kw:
+        return "established_company", "Contains traditional trade/infrastructure keywords and no tech indicators"
+
+    if any(s in sector for s in ["construction", "agriculture", "mining", "metals", "textiles", "transport"]):
+        if not has_tech_kw:
+            return "established_company", f"Traditional industry sector ({mca_sector or 'conventional'}) without tech indicators"
+
+    # 2. Tech / Startup indicators
+    if has_tech_kw and not has_trad_kw:
+        if founded_year and founded_year >= 2010:
+            return "startup", f"Modern technology keywords in {mca_sector or 'tech'} founded in {founded_year}"
+        return "startup", f"Technology markers present in entity name and sector ({mca_sector or 'Tech'})"
+
+    # 3. Generic business services / consulting without strong markers
+    if "business services" in sector or "finance" in sector:
+        if has_tech_kw:
+            return "startup", "Tech business service entity"
+        return "uncertain_for_review", "Generic business service / consulting entity requiring manual review"
+
+    # 4. Ambiguous / Mixed fallback
+    return "uncertain_for_review", "Mixed or ambiguous industry/entity markers requiring manual review"
+
+
 class MCAPipelineProcessor:
     """End-to-end pipeline for filtering, validating, and geocoding MCA Company Master Data."""
 
@@ -557,6 +629,15 @@ class MCAPipelineProcessor:
                 localities_counter[locality] = localities_counter.get(locality, 0) + 1
                 industries_counter[industry] = industries_counter.get(industry, 0) + 1
 
+                # Classify company entity into startup, established_company, or uncertain_for_review
+                mca_sector = row.get("Company Industrial Classification", "")
+                entity_class, class_reason = classify_company_entity(
+                    name=display_name,
+                    legal_name=legal_name,
+                    mca_sector=mca_sector,
+                    founded_year=founded_year,
+                )
+
                 # Structured candidate record (separate from verified startups: is_verified = False)
                 candidate_record = {
                     "company": {
@@ -565,7 +646,7 @@ class MCAPipelineProcessor:
                         "cin": cin,
                         "slug": slug,
                         "industry": industry,
-                        "mca_classification": row.get("Company Industrial Classification", ""),
+                        "mca_classification": mca_sector,
                         "company_category": row.get("Company Category", ""),
                         "company_class": row.get("Company Class", "Private"),
                         "listing_status": row.get("Listing Status", "Unlisted"),
@@ -573,6 +654,8 @@ class MCAPipelineProcessor:
                         "registration_date": reg_date_str or None,
                         "authorized_capital": auth_cap,
                         "paidup_capital": paid_cap,
+                        "entity_classification": entity_class,
+                        "classification_reason": class_reason,
                         "is_verified": False if mark_as_candidates else True,
                         "verification_status": "unverified_candidate" if mark_as_candidates else "verified_startup",
                         "candidate_status": "needs_manual_verification",
@@ -628,5 +711,451 @@ class MCAPipelineProcessor:
             "address_level_count": address_level_count,
             "locality_centroid_count": locality_centroid_count,
             "manual_verification_count": manual_verification_count,
+            "summary_stats": summary_stats,
+        }
+
+    def process_to_target_candidates(
+        self,
+        csv_file_path: Path,
+        target_total_unique: int = 500,
+        reference_files: Optional[List[Path]] = None,
+        mark_as_candidates: bool = True,
+    ) -> Dict[str, Any]:
+        """Processes records sequentially until `target_total_unique` unique candidate
+        companies are collected across all batches.
+
+        Requirements enforced:
+        1. CIN is the primary duplicate identifier across reference files and the current run.
+        2. Strict validation rules (Active status, 560xxx pincode, Bengaluru evidence, valid coordinates).
+        3. Clear entity classification: 'startup', 'established_company', 'uncertain_for_review'.
+        4. Preserves geocoding source and confidence (nominatim_osm vs centroids).
+        5. Sets candidate status (is_verified=False, candidate_status='needs_manual_verification').
+        6. Audits all evaluated rows, duplicate records, and failed records.
+        """
+        reference_cins: Set[str] = set()
+        reference_names: Set[str] = set()
+        reference_records: List[Dict[str, Any]] = []
+
+        if reference_files:
+            for rf in reference_files:
+                if rf and rf.exists():
+                    with open(rf, "r", encoding="utf-8", errors="replace") as f:
+                        ref_reader = csv.DictReader(f)
+                        for r in ref_reader:
+                            cin_val = (r.get("CIN") or r.get("cin") or "").strip()
+                            if not cin_val or cin_val in reference_cins:
+                                continue
+                            reference_cins.add(cin_val)
+
+                            legal_val = (r.get("Legal Name") or r.get("legal_name") or r.get("Display Name") or "").strip()
+                            if legal_val:
+                                reference_names.add(legal_val.lower())
+
+                            disp_name = (r.get("Display Name") or r.get("name") or legal_val).strip()
+                            slug_val = (r.get("Slug") or r.get("slug") or "").strip()
+                            ind_val = (r.get("Industry") or r.get("industry") or "").strip()
+                            mca_sec = (r.get("MCA Sector") or r.get("mca_classification") or "").strip()
+                            loc_val = (r.get("Locality") or r.get("locality") or "").strip()
+                            pin_val = (r.get("Postal Code") or r.get("postal_code") or "").strip()
+                            addr_val = (r.get("Address") or r.get("address") or "").strip()
+
+                            lat_val = float(r.get("Latitude") or r.get("latitude") or 0.0)
+                            lng_val = float(r.get("Longitude") or r.get("longitude") or 0.0)
+                            geo_src = (r.get("Geocoding Source") or r.get("geocoding_source") or "nominatim_osm").strip()
+                            conf_val = (r.get("Confidence") or r.get("confidence") or "high").strip()
+
+                            founded = None
+                            try:
+                                f_raw = r.get("Founded Year") or r.get("founded_year")
+                                if f_raw:
+                                    founded = int(float(f_raw))
+                            except (ValueError, TypeError):
+                                pass
+
+                            auth_cap = 0.0
+                            paid_cap = 0.0
+                            try:
+                                auth_cap = float(r.get("Authorized Capital") or r.get("authorized_capital") or 0)
+                            except (ValueError, TypeError):
+                                pass
+                            try:
+                                paid_cap = float(r.get("Paidup Capital") or r.get("paidup_capital") or 0)
+                            except (ValueError, TypeError):
+                                pass
+
+                            reg_date = (r.get("Registration Date") or r.get("registration_date") or "").strip() or None
+
+                            # Determine or preserve entity classification
+                            entity_class = (r.get("Entity Classification") or r.get("entity_classification") or "").strip()
+                            class_reason = (r.get("Classification Reason") or r.get("classification_reason") or "").strip()
+                            if not entity_class:
+                                entity_class, class_reason = classify_company_entity(
+                                    name=disp_name,
+                                    legal_name=legal_val,
+                                    mca_sector=mca_sec or ind_val,
+                                    founded_year=founded,
+                                )
+
+                            ref_candidate = {
+                                "company": {
+                                    "name": disp_name,
+                                    "legal_name": legal_val,
+                                    "cin": cin_val,
+                                    "slug": slug_val,
+                                    "industry": ind_val,
+                                    "mca_classification": mca_sec,
+                                    "company_category": r.get("Company Category", ""),
+                                    "company_class": r.get("Company Class", "Private"),
+                                    "listing_status": r.get("Listing Status", "Unlisted"),
+                                    "founded_year": founded,
+                                    "registration_date": reg_date,
+                                    "authorized_capital": auth_cap,
+                                    "paidup_capital": paid_cap,
+                                    "entity_classification": entity_class,
+                                    "classification_reason": class_reason,
+                                    "is_verified": False if mark_as_candidates else True,
+                                    "verification_status": "unverified_candidate" if mark_as_candidates else "verified_startup",
+                                    "candidate_status": "needs_manual_verification",
+                                    "candidate_notes": "MCA Master Data candidate from prior batch; pending manual verification.",
+                                    "verification_source": f"MCA Company Master Data ({rf.stem})",
+                                },
+                                "office": {
+                                    "address": addr_val,
+                                    "locality": loc_val,
+                                    "city": "Bengaluru",
+                                    "state": "Karnataka",
+                                    "postal_code": pin_val,
+                                    "latitude": round(lat_val, 4),
+                                    "longitude": round(lng_val, 4),
+                                    "geocoding_source": geo_src,
+                                    "geocoding_confidence": conf_val,
+                                },
+                            }
+                            reference_records.append(ref_candidate)
+
+        needed_new = max(0, target_total_unique - len(reference_records))
+        new_valid_records: List[Dict[str, Any]] = []
+        duplicate_records: List[Dict[str, Any]] = []
+        failed_records: List[Dict[str, Any]] = []
+        all_evaluated_rows: List[Dict[str, Any]] = []
+
+        seen_batch_cins: Set[str] = set()
+        seen_batch_names: Set[str] = set()
+
+        failure_reasons_counter: Dict[str, int] = {}
+        total_evaluated = 0
+
+        with open(csv_file_path, "r", encoding="utf-8", errors="replace") as f:
+            reader = csv.DictReader(f)
+
+            for row_idx, row in enumerate(reader):
+                if len(new_valid_records) >= needed_new:
+                    break
+
+                total_evaluated += 1
+
+                cin = (row.get("CIN") or "").strip()
+                legal_name = (row.get("Company Name") or "").strip()
+                status = (row.get("Company Status") or "").strip().lower()
+                pin_raw = row.get("Pin Code")
+                pincode = clean_pincode(pin_raw)
+                roc = (row.get("Company ROC") or "").strip().lower()
+                state = (row.get("Company State") or "").strip().lower()
+                addr = clean_address(row.get("Company Address") or "")
+
+                display_name, slug = clean_company_name(legal_name) if legal_name else ("", "")
+                locality = extract_locality_from_address(addr, pincode) if addr else "Bengaluru"
+                industry = map_industry(row.get("Company Industrial Classification"))
+                mca_sector = row.get("Company Industrial Classification", "")
+
+                audit_entry: Dict[str, Any] = {
+                    "row_index": row_idx,
+                    "cin": cin,
+                    "company_name": legal_name,
+                    "display_name": display_name,
+                    "raw_pin": pin_raw,
+                    "postal_code": pincode,
+                    "status": status,
+                    "locality": locality,
+                    "address": addr,
+                }
+
+                # 1. Duplicate Detection by CIN (Primary Identifier)
+                is_duplicate = False
+                duplicate_reason = ""
+
+                if cin and cin in reference_cins:
+                    is_duplicate = True
+                    duplicate_reason = f"Duplicate CIN '{cin}' matches existing candidate batches"
+                elif cin and cin in seen_batch_cins:
+                    is_duplicate = True
+                    duplicate_reason = f"Duplicate CIN '{cin}' repeated within current processing run"
+                elif legal_name and legal_name.lower() in reference_names:
+                    is_duplicate = True
+                    duplicate_reason = f"Duplicate entity name '{legal_name}' matches existing candidate batches"
+                elif legal_name and legal_name.lower() in seen_batch_names:
+                    is_duplicate = True
+                    duplicate_reason = f"Duplicate entity name '{legal_name}' repeated within current processing run"
+
+                if is_duplicate:
+                    lat, lng, geo_source, confidence = self.geocoder.geocode(locality, pincode, addr)
+                    dup_record = {
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "legal_name": legal_name,
+                        "display_name": display_name,
+                        "slug": slug,
+                        "industry": industry,
+                        "locality": locality,
+                        "postal_code": pincode or "",
+                        "address": addr,
+                        "latitude": round(lat, 4) if lat else None,
+                        "longitude": round(lng, 4) if lng else None,
+                        "geocoding_source": geo_source,
+                        "confidence": confidence,
+                        "duplicate_reason": duplicate_reason,
+                        "duplicate_of": "prior_mca_batches",
+                    }
+                    duplicate_records.append(dup_record)
+                    audit_entry["outcome"] = "DUPLICATE"
+                    audit_entry["details"] = duplicate_reason
+                    audit_entry["latitude"] = round(lat, 4) if lat else None
+                    audit_entry["longitude"] = round(lng, 4) if lng else None
+                    audit_entry["geocoding_source"] = geo_source
+                    audit_entry["confidence"] = confidence
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                seen_batch_cins.add(cin)
+                seen_batch_names.add(legal_name.lower())
+
+                # 2. Validation: Required fields
+                if not cin or not legal_name:
+                    reason = "Missing essential identifier: CIN or Company Name is empty"
+                    failure_reasons_counter[reason] = failure_reasons_counter.get(reason, 0) + 1
+                    failed_records.append({
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "company_name": legal_name,
+                        "failure_stage": "REQUIRED_FIELDS",
+                        "failure_reason": reason,
+                    })
+                    audit_entry["outcome"] = "FAILED"
+                    audit_entry["details"] = reason
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                # 3. Validation: Active Status
+                if status != "active":
+                    reason = f"Inactive company status: '{status or 'Unknown'}'"
+                    failure_reasons_counter[reason] = failure_reasons_counter.get(reason, 0) + 1
+                    failed_records.append({
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "company_name": legal_name,
+                        "status": status,
+                        "failure_stage": "COMPANY_STATUS",
+                        "failure_reason": reason,
+                    })
+                    audit_entry["outcome"] = "FAILED"
+                    audit_entry["details"] = reason
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                # 4. Validation: Postal Code 560xxx
+                if not pincode:
+                    reason = f"Invalid or non-Bengaluru postal code: '{pin_raw}' (requires 560xxx)"
+                    failure_reasons_counter[reason] = failure_reasons_counter.get(reason, 0) + 1
+                    failed_records.append({
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "company_name": legal_name,
+                        "raw_pin": pin_raw,
+                        "failure_stage": "PINCODE_VALIDATION",
+                        "failure_reason": reason,
+                    })
+                    audit_entry["outcome"] = "FAILED"
+                    audit_entry["details"] = reason
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                # 5. Validation: Location Evidence
+                is_blr_evidence = (
+                    "bangalore" in roc
+                    or "karnataka" in state
+                    or "bangalore" in addr.lower()
+                    or "bengaluru" in addr.lower()
+                )
+                if not is_blr_evidence:
+                    reason = "Registered address and ROC do not confirm Greater Bengaluru location"
+                    failure_reasons_counter[reason] = failure_reasons_counter.get(reason, 0) + 1
+                    failed_records.append({
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "company_name": legal_name,
+                        "roc": roc,
+                        "state": state,
+                        "address": addr,
+                        "failure_stage": "LOCATION_EVIDENCE",
+                        "failure_reason": reason,
+                    })
+                    audit_entry["outcome"] = "FAILED"
+                    audit_entry["details"] = reason
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                # 6. Geocoding
+                lat, lng, geo_source, confidence = self.geocoder.geocode(
+                    locality=locality,
+                    postal_code=pincode,
+                    address=addr,
+                )
+
+                if not self.geocoder.is_within_bounds(lat, lng):
+                    reason = f"Resolved coordinates ({lat}, {lng}) fall outside Greater Bengaluru bounding box"
+                    failure_reasons_counter[reason] = failure_reasons_counter.get(reason, 0) + 1
+                    failed_records.append({
+                        "row_index": row_idx,
+                        "cin": cin,
+                        "company_name": legal_name,
+                        "latitude": lat,
+                        "longitude": lng,
+                        "failure_stage": "GEOCODING_BOUNDS",
+                        "failure_reason": reason,
+                    })
+                    audit_entry["outcome"] = "FAILED"
+                    audit_entry["details"] = reason
+                    all_evaluated_rows.append(audit_entry)
+                    continue
+
+                # Parse financials and founded year
+                reg_date_str = (row.get("Company Registration Date") or "").strip()
+                founded_year = None
+                if reg_date_str:
+                    try:
+                        dt = datetime.strptime(reg_date_str, "%Y-%m-%d")
+                        founded_year = dt.year
+                    except ValueError:
+                        pass
+
+                try:
+                    auth_cap = float(row.get("Authorized Capital", 0) or 0)
+                except ValueError:
+                    auth_cap = 0.0
+
+                try:
+                    paid_cap = float(row.get("Paidup Capital", 0) or 0)
+                except ValueError:
+                    paid_cap = 0.0
+
+                # 7. Entity Classification
+                entity_class, class_reason = classify_company_entity(
+                    name=display_name,
+                    legal_name=legal_name,
+                    mca_sector=mca_sector,
+                    founded_year=founded_year,
+                )
+
+                candidate_record = {
+                    "company": {
+                        "name": display_name,
+                        "legal_name": legal_name,
+                        "cin": cin,
+                        "slug": slug,
+                        "industry": industry,
+                        "mca_classification": mca_sector,
+                        "company_category": row.get("Company Category", ""),
+                        "company_class": row.get("Company Class", "Private"),
+                        "listing_status": row.get("Listing Status", "Unlisted"),
+                        "founded_year": founded_year,
+                        "registration_date": reg_date_str or None,
+                        "authorized_capital": auth_cap,
+                        "paidup_capital": paid_cap,
+                        "entity_classification": entity_class,
+                        "classification_reason": class_reason,
+                        "is_verified": False if mark_as_candidates else True,
+                        "verification_status": "unverified_candidate" if mark_as_candidates else "verified_startup",
+                        "candidate_status": "needs_manual_verification",
+                        "candidate_notes": "MCA Master Data candidate; pending manual verification by admin before publishing.",
+                        "verification_source": "MCA Company Master Data (500-target expansion)",
+                    },
+                    "office": {
+                        "address": addr,
+                        "locality": locality,
+                        "city": "Bengaluru",
+                        "state": "Karnataka",
+                        "postal_code": pincode,
+                        "latitude": round(lat, 4),
+                        "longitude": round(lng, 4),
+                        "geocoding_source": geo_source,
+                        "geocoding_confidence": confidence,
+                    },
+                }
+
+                new_valid_records.append(candidate_record)
+
+                audit_entry["outcome"] = "VALID_CANDIDATE"
+                audit_entry["details"] = "Passed all validation rules"
+                audit_entry["latitude"] = round(lat, 4)
+                audit_entry["longitude"] = round(lng, 4)
+                audit_entry["geocoding_source"] = geo_source
+                audit_entry["confidence"] = confidence
+                all_evaluated_rows.append(audit_entry)
+
+        # Combine cumulative unique candidates across all batches
+        all_unique_candidates = reference_records + new_valid_records
+
+        # Calculate statistics across all 500 candidates
+        address_level_count = sum(1 for c in all_unique_candidates if c["office"]["geocoding_source"] == "nominatim_osm")
+        locality_centroid_count = sum(1 for c in all_unique_candidates if c["office"]["geocoding_source"] != "nominatim_osm")
+
+        classifications_all: Dict[str, int] = {}
+        for c in all_unique_candidates:
+            cls = c["company"].get("entity_classification", "uncertain_for_review")
+            classifications_all[cls] = classifications_all.get(cls, 0) + 1
+
+        new_batch_classifications: Dict[str, int] = {}
+        for c in new_valid_records:
+            cls = c["company"].get("entity_classification", "uncertain_for_review")
+            new_batch_classifications[cls] = new_batch_classifications.get(cls, 0) + 1
+
+        localities_all: Dict[str, int] = {}
+        industries_all: Dict[str, int] = {}
+        for c in all_unique_candidates:
+            loc = c["office"]["locality"]
+            ind = c["company"]["industry"]
+            localities_all[loc] = localities_all.get(loc, 0) + 1
+            industries_all[ind] = industries_all.get(ind, 0) + 1
+
+        summary_stats = {
+            "total_evaluated_in_run": total_evaluated,
+            "target_total_unique": target_total_unique,
+            "cumulative_unique_candidates_count": len(all_unique_candidates),
+            "new_candidates_count": len(new_valid_records),
+            "reference_candidates_count": len(reference_records),
+            "duplicate_records_count": len(duplicate_records),
+            "failed_records_count": len(failed_records),
+            "address_level_count": address_level_count,
+            "locality_centroid_count": locality_centroid_count,
+            "manual_verification_count": len(all_unique_candidates),
+            "database_modified": False,
+            "classification_distribution": classifications_all,
+            "new_batch_classification_distribution": new_batch_classifications,
+            "failure_reasons_breakdown": failure_reasons_counter,
+            "locality_distribution": localities_all,
+            "industry_distribution": industries_all,
+        }
+
+        return {
+            "total_evaluated": total_evaluated,
+            "all_unique_candidates": all_unique_candidates,
+            "new_valid_records": new_valid_records,
+            "reference_records": reference_records,
+            "duplicate_records": duplicate_records,
+            "failed_records": failed_records,
+            "all_evaluated_rows": all_evaluated_rows,
+            "address_level_count": address_level_count,
+            "locality_centroid_count": locality_centroid_count,
+            "manual_verification_count": len(all_unique_candidates),
             "summary_stats": summary_stats,
         }

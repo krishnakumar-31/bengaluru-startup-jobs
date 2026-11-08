@@ -16,6 +16,7 @@ import {
   ChevronRight,
   AlertCircle,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { CompanyResponse, PaginatedCompaniesResponse } from "@/types/api";
 import {
@@ -24,6 +25,9 @@ import {
   adminDeleteCompany,
 } from "@/lib/admin-api";
 import { getCompanyInitials } from "@/lib/formatters";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AdminCompaniesPage() {
   const [data, setData] = useState<PaginatedCompaniesResponse | null>(null);
@@ -95,23 +99,35 @@ export default function AdminCompaniesPage() {
   const total = data?.total || 0;
   const totalPages = data?.total_pages || 1;
 
+  const resetFilters = () => {
+    setSearch("");
+    setIndustry("");
+    setIsVerified("all");
+    setPage(1);
+  };
+
+  const hasActiveFilters = Boolean(search || industry || isVerified !== "all");
+
   return (
     <div className="space-y-6 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Startup Directory</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Manage verified startup profiles, industry classification, and headquarters.
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Startup Directory</h2>
+            <Badge variant="indigo" size="sm">
+              {total} registered
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Manage verified startup profiles, industry classification, websites, and headquarters.
           </p>
         </div>
 
-        <Link
-          href="/admin/dashboard/companies/new"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-500 transition self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add New Company</span>
+        <Link href="/admin/dashboard/companies/new">
+          <Button variant="primary" size="sm" icon={<Plus className="h-4 w-4" />}>
+            Add New Company
+          </Button>
         </Link>
       </div>
 
@@ -119,8 +135,8 @@ export default function AdminCompaniesPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur-md">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           {/* Search */}
-          <div className="sm:col-span-6 relative flex items-center">
-            <Search className="absolute left-3.5 h-4 w-4 text-slate-400" />
+          <div className="sm:col-span-5 relative flex items-center">
+            <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search companies by name or slug..."
@@ -129,7 +145,7 @@ export default function AdminCompaniesPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2 pl-10 pr-3 text-xs text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 py-2 pl-10 pr-3 text-xs text-white placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
             />
           </div>
 
@@ -141,7 +157,7 @@ export default function AdminCompaniesPage() {
                 setIndustry(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2 px-3 text-xs text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 py-2 px-3 text-xs text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
             >
               <option value="">All Industries</option>
               <option value="FinTech">FinTech</option>
@@ -150,6 +166,8 @@ export default function AdminCompaniesPage() {
               <option value="E-Commerce">E-Commerce</option>
               <option value="AI / ML">AI / ML</option>
               <option value="Enterprise SaaS">Enterprise SaaS</option>
+              <option value="FoodTech / Logistics">FoodTech / Logistics</option>
+              <option value="HealthTech">HealthTech</option>
             </select>
           </div>
 
@@ -161,12 +179,26 @@ export default function AdminCompaniesPage() {
                 setIsVerified(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2 px-3 text-xs text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 py-2 px-3 text-xs text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
             >
               <option value="all">All Verification Status</option>
               <option value="verified">Verified Only</option>
               <option value="unverified">Unverified Only</option>
             </select>
+          </div>
+
+          {/* Reset Filters */}
+          <div className="sm:col-span-1 flex items-center justify-end">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="w-full h-full flex items-center justify-center p-2 rounded-xl border border-slate-700/70 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-xs"
+                title="Reset filters"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -175,7 +207,7 @@ export default function AdminCompaniesPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
             <span className="text-xs text-slate-400">Loading companies from PostgreSQL...</span>
           </div>
         ) : error ? (
@@ -184,10 +216,15 @@ export default function AdminCompaniesPage() {
             <p className="text-sm font-semibold">{error}</p>
           </div>
         ) : companies.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">
-            <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-500" />
-            <p className="text-sm font-semibold text-slate-300">No companies found</p>
-            <p className="text-xs text-slate-500 mt-1">Try resetting search or filters.</p>
+          <div className="p-8">
+            <EmptyState
+              variant="dark"
+              icon={<Building2 className="h-6 w-6" />}
+              title="No companies found"
+              description="No registered companies match your filter criteria."
+              actionLabel={hasActiveFilters ? "Reset Filters" : "Add First Company"}
+              onAction={hasActiveFilters ? resetFilters : () => {}}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -206,7 +243,7 @@ export default function AdminCompaniesPage() {
                   <tr key={comp.id} className="hover:bg-slate-800/40 transition">
                     <td className="py-4 px-4 sm:px-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-white font-bold text-xs">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 text-white font-bold text-xs shadow-inner">
                           {comp.logo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -222,16 +259,16 @@ export default function AdminCompaniesPage() {
                           )}
                         </div>
                         <div>
-                          <span className="font-bold text-white text-sm block">{comp.name}</span>
+                          <span className="font-bold text-white text-sm block leading-snug">{comp.name}</span>
                           <span className="text-[11px] font-mono text-slate-400">/{comp.slug}</span>
                         </div>
                       </div>
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className="rounded-lg bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                      <Badge variant="secondary" size="sm">
                         {comp.industry || "General Tech"}
-                      </span>
+                      </Badge>
                     </td>
 
                     <td className="py-4 px-4">
@@ -240,23 +277,23 @@ export default function AdminCompaniesPage() {
                           href={comp.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 hover:underline"
+                          className="inline-flex items-center gap-1 text-slate-400 hover:text-indigo-400 hover:underline transition"
                         >
-                          <Globe className="h-3 w-3" />
+                          <Globe className="h-3 w-3 text-slate-500" />
                           <span className="truncate max-w-[140px]">
                             {comp.website.replace(/^https?:\/\//, "")}
                           </span>
-                          <ExternalLink className="h-2.5 w-2.5" />
+                          <ExternalLink className="h-2.5 w-2.5 text-slate-500" />
                         </a>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-slate-600">—</span>
                       )}
                     </td>
 
                     <td className="py-4 px-4 text-center">
                       <button
                         onClick={() => handleToggleVerify(comp.id)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition cursor-pointer ${
                           comp.is_verified
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
                             : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"
@@ -304,7 +341,7 @@ export default function AdminCompaniesPage() {
 
         {/* Pagination Footer */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-t border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-t border-slate-800 text-xs text-slate-400 bg-slate-950/40">
             <span>
               Showing page <strong className="text-white">{page}</strong> of{" "}
               <strong className="text-white">{totalPages}</strong> ({total} total companies)
@@ -313,14 +350,14 @@ export default function AdminCompaniesPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
+                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 transition"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
+                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 transition"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -352,35 +389,39 @@ export default function AdminCompaniesPage() {
                 <p className="font-semibold text-amber-200">
                   Do you want to force delete this company and all associated records?
                 </p>
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => handleDeleteConfirm(true)}
                   disabled={deleteLoading}
-                  className="w-full rounded-xl bg-rose-600 py-1.5 text-xs font-bold text-white hover:bg-rose-500 transition"
+                  className="w-full justify-center"
                 >
                   Confirm Force Delete
-                </button>
+                </Button>
               </div>
             )}
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setDeletingCompany(null);
                   setDeleteError(null);
                 }}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800"
               >
                 Cancel
-              </button>
+              </Button>
               {!deleteError && (
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => handleDeleteConfirm(false)}
-                  disabled={deleteLoading}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-500 shadow-md transition"
+                  loading={deleteLoading}
                 >
-                  {deleteLoading ? "Deleting..." : "Delete Company"}
-                </button>
+                  Delete Company
+                </Button>
               )}
             </div>
           </div>

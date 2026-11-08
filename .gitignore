@@ -1,25 +1,37 @@
-# Environment variable files
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
-backend/.env
-frontend/.env
-frontend/.env.local
 
-# Python virtual environments & packages
+# ==========================================
+# ENVIRONMENT VARIABLES & SECRETS
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# ==========================================
+# PYTHON VIRTUAL ENVIRONMENTS
+# ==========================================
 venv/
 .venv/
 env/
 ENV/
 env.bak/
 venv.bak/
+
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Python packaging
 build/
 develop-eggs/
 dist/
@@ -36,7 +48,9 @@ wheels/
 .installed.cfg
 *.egg
 
-# Testing & Coverage
+# ==========================================
+# TESTING & COVERAGE
+# ==========================================
 .pytest_cache/
 .coverage
 .coverage.*
@@ -46,18 +60,25 @@ htmlcov/
 nosetests.xml
 coverage.xml
 
-# Node & Next.js dependencies & builds
+# ==========================================
+# NODE.JS & NEXT.JS
+# ==========================================
 node_modules/
 frontend/node_modules/
+
 .next/
 frontend/.next/
+
 out/
 frontend/out/
+
 *.tsbuildinfo
 next-env.d.ts
-.npm
+.npm/
 
-# IDEs & Editors
+# ==========================================
+# IDEs & EDITORS
+# ==========================================
 .vscode/
 .idea/
 *.swp
@@ -66,80 +87,41 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 
-# Uploads & User generated data
+# ==========================================
+# LOGS
+# ==========================================
+*.log
+logs/
+
+# ==========================================
+# USER UPLOADS
+# ==========================================
 data/uploads/
 uploads/
-*.log
 
-# Environment variable files
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
-backend/.env
-frontend/.env
-frontend/.env.local
+# ==========================================
+# MCA DATA & ARCHIVES
+# ==========================================
+data/archive/
 
-# Python virtual environments & packages
-venv/
-.venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+data/output/mca_*
+data/output/candidate_verifications.json
 
-# Testing & Coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-nosetests.xml
-coverage.xml
+# Generated company import datasets
+data/output/bengaluru_companies_offices_jobs_import_*.csv
 
-# Node & Next.js dependencies & builds
-node_modules/
-frontend/node_modules/
-.next/
-frontend/.next/
-out/
-frontend/out/
-*.tsbuildinfo
-next-env.d.ts
-.npm
+# ==========================================
+# TEMPORARY TEST FILES
+# ==========================================
+scratch/
+tmp/
+temp/
 
-# IDEs & Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-
-# Uploads & User generated data
-data/uploads/
-uploads/
-*.log
+# ==========================================
+# DATABASE & BACKUP FILES
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak

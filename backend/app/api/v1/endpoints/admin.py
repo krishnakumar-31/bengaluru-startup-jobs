@@ -35,9 +35,16 @@ from app.schemas.admin import (
     ImportConfirmResponse,
     AdminVerificationResponse,
 )
-from app.schemas.company import CompanyResponse, PaginatedCompaniesResponse
+from app.schemas.company import CompanyResponse, PaginatedCompaniesResponse, CompanyDetailResponse
 from app.schemas.office import OfficeResponse
 from app.schemas.job import JobResponse, PaginatedJobsResponse
+from app.schemas.candidate_verification import (
+    CandidateCompanyItem,
+    CandidateVerificationUpdate,
+    CandidateVerificationSummary,
+    PaginatedCandidatesResponse,
+)
+from app.services.candidate_verification_service import CandidateVerificationService
 
 admin_router = APIRouter()
 
@@ -233,15 +240,15 @@ def create_company(
     return CompanyResponse.model_validate(comp)
 
 
-@admin_router.get("/companies/{company_id}", response_model=CompanyResponse, summary="Get Company by ID")
+@admin_router.get("/companies/{company_id}", response_model=CompanyDetailResponse, summary="Get Company by ID")
 def get_company(
     company_id: int,
     current_admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
-) -> CompanyResponse:
+) -> CompanyDetailResponse:
     service = AdminService(db)
     comp = service.get_company(company_id)
-    return CompanyResponse.model_validate(comp)
+    return CompanyDetailResponse.model_validate(comp)
 
 
 @admin_router.put("/companies/{company_id}", response_model=CompanyResponse, summary="Update Company")
@@ -300,6 +307,7 @@ def list_offices(
                 "id": o.id,
                 "company_id": o.company_id,
                 "company_name": o.company.name if o.company else None,
+                "name": o.name,
                 "address": o.address,
                 "locality": o.locality,
                 "city": o.city,
@@ -307,6 +315,7 @@ def list_offices(
                 "postal_code": o.postal_code,
                 "latitude": o.latitude,
                 "longitude": o.longitude,
+                "is_headquarters": o.is_headquarters,
                 "created_at": o.created_at,
                 "updated_at": o.updated_at,
             }
@@ -374,6 +383,7 @@ def list_jobs(
     company_id: Optional[int] = Query(default=None),
     locality: Optional[str] = Query(default=None),
     employment_type: Optional[str] = Query(default=None),
+    work_mode: Optional[str] = Query(default=None),
     status_filter: Optional[str] = Query(default=None, alias="status"),
     current_admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
@@ -386,6 +396,7 @@ def list_jobs(
         company_id=company_id,
         locality=locality,
         employment_type=employment_type,
+        work_mode=work_mode,
         status_filter=status_filter,
     )
     total_pages = (total + limit - 1) // limit if total > 0 else 1
@@ -461,6 +472,22 @@ def delete_job(
 # 6. Import & Verification Hub Endpoints
 # ==============================================================================
 
+@admin_router.get("/imports/template", summary="Download Unified CSV Import Template")
+def download_import_template(
+    current_admin: AdminUser = Depends(get_current_admin),
+) -> Response:
+    """Returns the standardized CSV template with headers and example records."""
+    from app.services.unified_import_service import UnifiedImportService
+    csv_data = UnifiedImportService.get_template_csv()
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="startup_jobs_import_template.csv"'
+        },
+    )
+
+
 @admin_router.post("/imports/preview", response_model=ImportPreviewResponse, summary="Upload & Preview Import")
 async def preview_import(
     file: UploadFile = File(...),
@@ -469,24 +496,50 @@ async def preview_import(
 ) -> ImportPreviewResponse:
     filename = file.filename or ""
     content_bytes = await file.read()
-    content_str = content_bytes.decode("utf-8", errors="replace")
 
-    file_type = "json" if filename.lower().endswith(".json") else "csv" if filename.lower().endswith(".csv") else ""
+    # Support UTF-8 with BOM (utf-8-sig), standard UTF-8, and latin-1 fallback
+    try:
+        content_str = content_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            content_str = content_bytes.decode("utf-8", errors="replace")
+        except Exception:
+            content_str = content_bytes.decode("latin-1", errors="replace")
+
+    file_type = (
+        "json"
+        if filename.lower().endswith(".json")
+        else "csv"
+        if (filename.lower().endswith(".csv") or filename.lower().endswith(".tsv"))
+        else ""
+    )
     if not file_type:
-        raise HTTPException(status_code=400, detail="Only .csv and .json files are supported.")
+        raise HTTPException(status_code=400, detail="Only .csv, .tsv and .json files are supported.")
 
     service = AdminService(db)
     return service.preview_import_file(content_str, file_type)
 
 
 @admin_router.post("/imports/confirm", response_model=ImportConfirmResponse, summary="Confirm & Ingest Import")
-def confirm_import(
-    raw_accepted_json: str = Form(...),
+async def confirm_import(
+    request: Request,
     current_admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ) -> ImportConfirmResponse:
+    content_type = request.headers.get("content-type", "")
+    raw_json = None
+    if "application/json" in content_type:
+        body = await request.json()
+        raw_json = body.get("raw_accepted_json") or body.get("raw_json_records")
+    else:
+        form = await request.form()
+        raw_json = form.get("raw_accepted_json") or form.get("raw_json_records")
+
+    if not raw_json:
+        raise HTTPException(status_code=400, detail="Missing accepted records payload")
+
     service = AdminService(db)
-    return service.confirm_import(raw_accepted_json)
+    return service.confirm_import(str(raw_json))
 
 
 @admin_router.get("/verification", response_model=AdminVerificationResponse, summary="Verification Hub")
@@ -496,3 +549,97 @@ def get_verification_hub(
 ) -> AdminVerificationResponse:
     service = AdminService(db)
     return service.get_verification_hub()
+
+
+# ==============================================================================
+# 7. MCA Candidate Verification Workflow Endpoints (Isolated from Production)
+# ==============================================================================
+
+@admin_router.get(
+    "/candidates",
+    response_model=PaginatedCandidatesResponse,
+    summary="List MCA Candidate Companies with Verification State",
+)
+def list_candidate_companies(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    status: Optional[str] = Query(None, description="Filter by verification status ('Needs Review', 'Verified', 'Rejected')"),
+    classification: Optional[str] = Query(None, description="Filter by classification ('startup', 'established_company', 'uncertain_for_review')"),
+    industry: Optional[str] = Query(None, description="Filter by industry"),
+    locality: Optional[str] = Query(None, description="Filter by locality"),
+    search: Optional[str] = Query(None, description="Search company name, CIN, or address"),
+    exclude_rejected: bool = Query(False, description="Exclude rejected candidates from active list"),
+    current_admin: AdminUser = Depends(get_current_admin),
+) -> PaginatedCandidatesResponse:
+    """Lists MCA candidate companies with pagination, filtering, and summary statistics."""
+    service = CandidateVerificationService()
+    return service.get_candidates(
+        page=page,
+        limit=limit,
+        status_filter=status,
+        classification=classification,
+        industry=industry,
+        locality=locality,
+        search=search,
+        exclude_rejected=exclude_rejected,
+    )
+
+
+@admin_router.get(
+    "/candidates/summary",
+    response_model=CandidateVerificationSummary,
+    summary="Candidate Verification Summary Statistics",
+)
+def get_candidates_summary(
+    current_admin: AdminUser = Depends(get_current_admin),
+) -> CandidateVerificationSummary:
+    """Returns aggregate verification metrics across the candidate company pool."""
+    service = CandidateVerificationService()
+    return service.compute_summary()
+
+
+@admin_router.get(
+    "/candidates/{cin}",
+    response_model=CandidateCompanyItem,
+    summary="Get Single Candidate Company by CIN",
+)
+def get_candidate_company(
+    cin: str,
+    current_admin: AdminUser = Depends(get_current_admin),
+) -> CandidateCompanyItem:
+    """Retrieves full candidate company details and current manual review state."""
+    service = CandidateVerificationService()
+    return service.get_candidate_by_cin(cin)
+
+
+@admin_router.put(
+    "/candidates/{cin}",
+    response_model=CandidateCompanyItem,
+    summary="Update Candidate Verification Review and Save Evidence",
+)
+def update_candidate_verification(
+    cin: str,
+    payload: CandidateVerificationUpdate,
+    current_admin: AdminUser = Depends(get_current_admin),
+) -> CandidateCompanyItem:
+    """Updates candidate verification review, status, and evidence. Does not alter production tables."""
+    service = CandidateVerificationService()
+    return service.update_candidate_verification(
+        cin=cin,
+        payload=payload,
+        reviewed_by=current_admin.username,
+    )
+
+
+@admin_router.post(
+    "/candidates/{cin}/promote",
+    summary="Promote Approved Candidate to PostgreSQL",
+)
+def promote_candidate_to_database(
+    cin: str,
+    current_admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Promotes an approved MCA candidate into PostgreSQL companies and offices tables."""
+    service = CandidateVerificationService()
+    return service.promote_candidate_to_db(cin=cin, db=db)

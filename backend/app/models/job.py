@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
@@ -40,9 +40,17 @@ class Job(Base, TimestampMixin):
     employment_type: Mapped[str] = mapped_column(
         String(50), default="full-time", server_default="full-time", nullable=False, index=True
     )
+    work_mode: Mapped[str] = mapped_column(
+        String(50), default="in-office", server_default="in-office", nullable=False, index=True
+    )
+    vacancies: Mapped[int] = mapped_column(
+        Integer, default=1, server_default="1", nullable=False
+    )
     experience_level: Mapped[Optional[str]] = mapped_column(
         String(50), default="mid", server_default="mid", nullable=True, index=True
     )
+    experience_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    experience_max: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     salary_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     salary_max: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -52,6 +60,7 @@ class Job(Base, TimestampMixin):
 
     skills: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String(100)), nullable=True)
     application_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    job_source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     status: Mapped[str] = mapped_column(
         String(50), default="active", server_default="active", nullable=False, index=True
@@ -74,6 +83,9 @@ class Job(Base, TimestampMixin):
     )
 
     # Backward compatibility properties
+    experience_min_years = synonym("experience_min")
+    experience_max_years = synonym("experience_max")
+
     @hybrid_property
     def is_active(self) -> bool:
         return self.status == "active"

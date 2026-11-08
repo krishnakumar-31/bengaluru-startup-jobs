@@ -195,10 +195,11 @@ class AdminService:
             for label, cnt in loc_rows
         ]
 
-        # 4. Jobs by status
+        # 4. Jobs by status (normalized case-insensitive grouping to avoid duplicate label buckets)
+        status_expr = func.lower(func.coalesce(Job.status, "draft"))
         status_rows = (
-            self.db.query(Job.status, func.count(Job.id))
-            .group_by(Job.status)
+            self.db.query(status_expr, func.count(Job.id))
+            .group_by(status_expr)
             .order_by(desc(func.count(Job.id)))
             .all()
         )
@@ -259,8 +260,11 @@ class AdminService:
         company = Company(
             name=data.name.strip(),
             slug=slug,
+            cin=data.cin.strip() if data.cin else None,
             description=data.description,
             website=data.website,
+            email=data.email,
+            phone=data.phone,
             logo_url=data.logo_url,
             industry=data.industry,
             company_size=data.company_size,
@@ -295,8 +299,14 @@ class AdminService:
             company.slug = slug
         if data.description is not None:
             company.description = data.description
+        if data.cin is not None:
+            company.cin = data.cin.strip() if data.cin else None
         if data.website is not None:
             company.website = data.website
+        if data.email is not None:
+            company.email = data.email
+        if data.phone is not None:
+            company.phone = data.phone
         if data.logo_url is not None:
             company.logo_url = data.logo_url
         if data.industry is not None:
@@ -383,6 +393,7 @@ class AdminService:
 
         office = Office(
             company_id=data.company_id,
+            name=data.name.strip() if data.name else None,
             address=data.address,
             locality=data.locality.strip(),
             city=data.city.strip() or "Bengaluru",
@@ -390,6 +401,7 @@ class AdminService:
             postal_code=data.postal_code.strip() if data.postal_code else None,
             latitude=data.latitude,
             longitude=data.longitude,
+            is_headquarters=data.is_headquarters,
         )
         self.db.add(office)
         self.db.commit()
@@ -434,6 +446,10 @@ class AdminService:
             else:
                 office.postal_code = None
 
+        if data.name is not None:
+            office.name = data.name.strip() if data.name else None
+        if data.is_headquarters is not None:
+            office.is_headquarters = data.is_headquarters
         if data.address is not None:
             office.address = data.address
         if data.locality is not None:
@@ -471,6 +487,7 @@ class AdminService:
         company_id: Optional[int] = None,
         locality: Optional[str] = None,
         employment_type: Optional[str] = None,
+        work_mode: Optional[str] = None,
         status_filter: Optional[str] = None,
     ) -> Tuple[List[Job], int]:
         query = self.db.query(Job).options(
@@ -487,6 +504,8 @@ class AdminService:
             query = query.join(Job.office).filter(Office.locality.ilike(f"%{locality.strip()}%"))
         if employment_type and employment_type != "all":
             query = query.filter(Job.employment_type.ilike(f"%{employment_type.strip()}%"))
+        if work_mode and work_mode != "all":
+            query = query.filter(Job.work_mode == work_mode)
         if status_filter and status_filter != "all":
             query = query.filter(Job.status == status_filter)
 
@@ -531,12 +550,17 @@ class AdminService:
             slug=slug,
             description=data.description,
             employment_type=data.employment_type,
+            work_mode=data.work_mode,
+            vacancies=data.vacancies,
             experience_level=data.experience_level,
+            experience_min=data.experience_min,
+            experience_max=data.experience_max,
             salary_min=data.salary_min,
             salary_max=data.salary_max,
             currency=data.currency or "INR",
             skills=data.skills,
             application_url=data.application_url,
+            job_source_url=data.job_source_url or data.source_url,
             status=data.status,
             posted_at=data.posted_at or datetime.now(timezone.utc),
             expires_at=data.expires_at,
@@ -593,12 +617,22 @@ class AdminService:
             job.description = data.description
         if data.employment_type is not None:
             job.employment_type = data.employment_type
+        if data.work_mode is not None:
+            job.work_mode = data.work_mode
+        if data.vacancies is not None:
+            job.vacancies = data.vacancies
         if data.experience_level is not None:
             job.experience_level = data.experience_level
+        if data.experience_min is not None:
+            job.experience_min = data.experience_min
+        if data.experience_max is not None:
+            job.experience_max = data.experience_max
         if data.skills is not None:
             job.skills = data.skills
         if data.currency is not None:
             job.currency = data.currency
+        if data.job_source_url is not None:
+            job.job_source_url = data.job_source_url
         if data.status is not None:
             job.status = data.status
 
@@ -672,7 +706,12 @@ class AdminService:
         )
 
     def preview_import_file(self, content_str: str, file_type: str) -> ImportPreviewResponse:
-        """Parses CSV or JSON content and runs PipelineValidator to preview accepted vs rejected records."""
+        """Parses CSV or JSON content to preview accepted vs rejected records."""
+        if file_type == "csv":
+            from app.services.unified_import_service import UnifiedImportService
+            unified_svc = UnifiedImportService(self.db)
+            return unified_svc.validate_and_preview_csv(content_str)
+
         from app.pipeline.models import (
             RawCompanyData,
             RawOfficeData,
@@ -838,7 +877,21 @@ class AdminService:
         )
 
     def confirm_import(self, raw_accepted_json: str) -> ImportConfirmResponse:
-        """Runs DatabaseImporter within a transaction to ingest verified preview records."""
+        """Runs UnifiedImportService or DatabaseImporter to ingest verified preview records."""
+        try:
+            items_dict = json.loads(raw_accepted_json)
+            # If records have unified import format with 'company' dict and 'office'
+            if isinstance(items_dict, list) and len(items_dict) > 0:
+                first = items_dict[0]
+                if isinstance(first, dict) and "company" in first and isinstance(first["company"], dict) and "is_verified" in first["company"]:
+                    from app.services.unified_import_service import UnifiedImportService
+                    unified_svc = UnifiedImportService(self.db)
+                    return unified_svc.execute_unified_import(raw_accepted_json)
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
         from app.pipeline.models import ValidatedStartupRecord
         try:
             items_dict = json.loads(raw_accepted_json)
@@ -856,5 +909,7 @@ class AdminService:
             offices_updated=report.offices_updated,
             jobs_created=report.jobs_created,
             jobs_updated=report.jobs_updated,
+            skipped_count=0,
+            rejected_count=0,
             message="Import completed successfully.",
         )

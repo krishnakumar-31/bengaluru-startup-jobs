@@ -11,7 +11,11 @@ class JobBase(BaseModel):
     slug: str
     description: str
     employment_type: str = "full-time"
+    work_mode: str = "in-office"
+    vacancies: int = 1
     experience_level: Optional[str] = "mid"
+    experience_min: Optional[int] = None
+    experience_max: Optional[int] = None
     role_type: Optional[str] = "full-time"
     workplace_type: Optional[str] = "on-site"
     locality: Optional[str] = None
@@ -21,6 +25,7 @@ class JobBase(BaseModel):
     salary_currency: Optional[str] = "INR"
     skills: Optional[List[str]] = None
     application_url: Optional[str] = None
+    job_source_url: Optional[str] = None
     status: str = "active"
     is_active: bool = True
     posted_at: Optional[datetime] = None

@@ -3,20 +3,75 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
+  --foreground: #080d18;
+
+  /* Premium Reference Brand Identity */
+  --header-bg: #ffffff;
+  --hero-bg: #080d18;
+  --accent-orange: #f97316;
+  --accent-orange-hover: #ea580c;
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-dark: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-hero-bg: #080d18;
+  --color-accent-orange: #f97316;
+  --color-accent-orange-hover: #ea580c;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #64748b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-feature-settings: "rlig" 1, "calt" 1;
+  font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1, "cv04" 1;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark scrollbars for admin and dark components */
+.dark-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 /* Custom Leaflet Map styling */
@@ -24,14 +79,15 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: #0b1120;
+  background-color: #080d18;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
 .leaflet-popup-content-wrapper {
   background: #ffffff;
-  color: #0f172a;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  color: #090d16;
+  border-radius: 1.125rem;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 10px 10px -5px rgba(15, 23, 42, 0.08);
   padding: 0;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -51,3 +107,57 @@ body {
   border: none;
 }
 
+/* Shimmer pulse effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Subtle Hero entrance and float animations */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-zoom-subtle {
+  0% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-bg {
+  animation: hero-zoom-subtle 10s ease-out forwards;
+}
+
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-hero-bg,
+  .animate-shimmer {
+    animation: none !important;
+    transform: none !important;
+  }
+}

@@ -2,17 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { Loader2, MapPin } from "lucide-react";
-import { ApiJobMap, GroupedOfficeLocation, MCAPreviewCompany } from "@/types";
+import { OfficeLocationMapResponse } from "@/types/api";
 
-interface InteractiveMapProps {
-  jobs: ApiJobMap[];
-  mcaCompanies?: MCAPreviewCompany[];
-  showMcaLayer?: boolean;
-  showJobsLayer?: boolean;
+export interface InteractiveMapProps {
+  locations: OfficeLocationMapResponse[];
   selectedOfficeId?: number | null;
-  onSelectOffice?: (office: GroupedOfficeLocation | null) => void;
+  onSelectOffice?: (location: OfficeLocationMapResponse | null) => void;
   onOpenCompanyModal?: (companyId: number) => void;
-  tileStyle?: "osm" | "carto";
 }
 
 const DynamicInteractiveMap = dynamic(
@@ -20,7 +16,7 @@ const DynamicInteractiveMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-950 text-slate-400 p-8 rounded-2xl">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-950 text-slate-400 p-8 rounded-2xl min-h-[460px]">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3 animate-pulse">
           <MapPin className="h-6 w-6" />
         </div>
@@ -28,7 +24,7 @@ const DynamicInteractiveMap = dynamic(
           <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
           <span>Mounting Bengaluru Interactive Map...</span>
         </div>
-        <p className="text-xs text-slate-500 mt-1">Loading OpenStreetMap tiles and verified coordinates</p>
+        <p className="text-xs text-slate-500 mt-1">Loading OpenStreetMap tiles and approved company coordinates</p>
       </div>
     ),
   }

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class OfficeBase(BaseModel):
+    name: Optional[str] = None
     address: Optional[str] = None
     locality: Optional[str] = None
     city: str = "Bengaluru"
@@ -11,6 +12,7 @@ class OfficeBase(BaseModel):
     postal_code: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    is_headquarters: bool = False
 
     @field_validator("latitude")
     @classmethod

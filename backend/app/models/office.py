@@ -1,5 +1,5 @@
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import String, Integer, Float, ForeignKey, Index, CheckConstraint
+from sqlalchemy import String, Integer, Float, ForeignKey, Index, CheckConstraint, Boolean, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.db.base import Base, TimestampMixin
 
@@ -15,6 +15,7 @@ class Office(Base, TimestampMixin):
     company_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     locality: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
     city: Mapped[str] = mapped_column(
@@ -26,6 +27,9 @@ class Office(Base, TimestampMixin):
     postal_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
     latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    is_headquarters: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false"), nullable=False
+    )
 
     # Relationships
     company: Mapped["Company"] = relationship("Company", back_populates="offices")

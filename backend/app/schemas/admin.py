@@ -66,8 +66,11 @@ class AdminChartsResponse(BaseModel):
 class AdminCompanyCreate(BaseModel):
     name: str
     slug: Optional[str] = None
+    cin: Optional[str] = None
     description: Optional[str] = None
     website: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     logo_url: Optional[str] = None
     industry: Optional[str] = None
     company_size: Optional[str] = None
@@ -78,8 +81,11 @@ class AdminCompanyCreate(BaseModel):
 class AdminCompanyUpdate(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
+    cin: Optional[str] = None
     description: Optional[str] = None
     website: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     logo_url: Optional[str] = None
     industry: Optional[str] = None
     company_size: Optional[str] = None
@@ -90,6 +96,7 @@ class AdminCompanyUpdate(BaseModel):
 # --- Admin Office CRUD Schemas ---
 class AdminOfficeCreate(BaseModel):
     company_id: int
+    name: Optional[str] = None
     address: Optional[str] = None
     locality: str
     city: str = "Bengaluru"
@@ -97,10 +104,12 @@ class AdminOfficeCreate(BaseModel):
     postal_code: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    is_headquarters: bool = False
 
 
 class AdminOfficeUpdate(BaseModel):
     company_id: Optional[int] = None
+    name: Optional[str] = None
     address: Optional[str] = None
     locality: Optional[str] = None
     city: Optional[str] = None
@@ -108,6 +117,7 @@ class AdminOfficeUpdate(BaseModel):
     postal_code: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    is_headquarters: Optional[bool] = None
 
 
 # --- Admin Job CRUD Schemas ---
@@ -118,7 +128,11 @@ class AdminJobCreate(BaseModel):
     slug: Optional[str] = None
     description: str
     employment_type: str = "full-time"
+    work_mode: str = "in-office"
+    vacancies: int = 1
     experience_level: Optional[str] = "mid"
+    experience_min: Optional[int] = None
+    experience_max: Optional[int] = None
     role_type: Optional[str] = "full-time"
     workplace_type: Optional[str] = "on-site"
     salary_min: Optional[int] = None
@@ -127,6 +141,7 @@ class AdminJobCreate(BaseModel):
     skills: Optional[List[str]] = None
     application_url: Optional[str] = None
     source_url: Optional[str] = None
+    job_source_url: Optional[str] = None
     status: str = "active"
     posted_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
@@ -139,7 +154,11 @@ class AdminJobUpdate(BaseModel):
     slug: Optional[str] = None
     description: Optional[str] = None
     employment_type: Optional[str] = None
+    work_mode: Optional[str] = None
+    vacancies: Optional[int] = None
     experience_level: Optional[str] = None
+    experience_min: Optional[int] = None
+    experience_max: Optional[int] = None
     role_type: Optional[str] = None
     workplace_type: Optional[str] = None
     salary_min: Optional[int] = None
@@ -148,6 +167,7 @@ class AdminJobUpdate(BaseModel):
     skills: Optional[List[str]] = None
     application_url: Optional[str] = None
     source_url: Optional[str] = None
+    job_source_url: Optional[str] = None
     status: Optional[str] = None
     posted_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
@@ -159,18 +179,31 @@ class AdminJobStatusUpdate(BaseModel):
 
 # --- Import & Verification Schemas ---
 class ImportPreviewItem(BaseModel):
+    row_number: int = 1
     company_name: str
     company_slug: str
+    company_cin: Optional[str] = None
+    office_name: Optional[str] = None
     locality: Optional[str] = None
     job_title: Optional[str] = None
+    job_slug: Optional[str] = None
+    vacancies: Optional[int] = None
+    is_duplicate_company: bool = False
+    is_duplicate_office: bool = False
+    is_duplicate_job: bool = False
     valid: bool
     issues: List[str] = []
+    warnings: List[str] = []
 
 
 class ImportPreviewResponse(BaseModel):
     total_records: int
     accepted_count: int
     rejected_count: int
+    new_companies_count: int = 0
+    existing_companies_count: int = 0
+    new_offices_count: int = 0
+    new_jobs_count: int = 0
     items: List[ImportPreviewItem]
     raw_accepted_json: Optional[str] = None
 
@@ -182,6 +215,8 @@ class ImportConfirmResponse(BaseModel):
     offices_updated: int
     jobs_created: int
     jobs_updated: int
+    skipped_count: int = 0
+    rejected_count: int = 0
     message: str
 
 

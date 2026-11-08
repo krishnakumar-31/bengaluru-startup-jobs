@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Loader2,
   X,
+  RotateCcw,
 } from "lucide-react";
 import {
   adminGetOffices,
@@ -23,6 +24,9 @@ import {
   adminGetCompanies,
 } from "@/lib/admin-api";
 import { OfficeResponse, ApiCompany } from "@/types/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Greater Bengaluru Bounding Box constants
 const BENGALURU_BOUNDS = {
@@ -42,13 +46,15 @@ export default function AdminOfficesPage() {
   const [loading, setLoading] = useState(true);
 
   // Filters
-  const [companyFilter, setCompanyFilter] = useState<string>("");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [localityFilter, setLocalityFilter] = useState<string>("");
 
   // Modal state for Add/Edit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOffice, setEditingOffice] = useState<OfficeResponse | null>(null);
   const [formCompanyId, setFormCompanyId] = useState<number | "">("");
+  const [formName, setFormName] = useState("");
+  const [formIsHeadquarters, setFormIsHeadquarters] = useState(false);
   const [formLocality, setFormLocality] = useState("Koramangala");
   const [formAddress, setFormAddress] = useState("");
   const [formCity, setFormCity] = useState("Bengaluru");
@@ -72,7 +78,7 @@ export default function AdminOfficesPage() {
       const res = await adminGetOffices({
         page,
         limit,
-        company_id: companyFilter ? Number(companyFilter) : undefined,
+        company_id: companyFilter && companyFilter !== "all" ? Number(companyFilter) : undefined,
         locality: localityFilter.trim() || undefined,
       });
       setOffices(res.items);
@@ -102,9 +108,17 @@ export default function AdminOfficesPage() {
     fetchOffices();
   };
 
+  const handleResetFilters = () => {
+    setCompanyFilter("all");
+    setLocalityFilter("");
+    setPage(1);
+  };
+
   const openCreateModal = () => {
     setEditingOffice(null);
     setFormCompanyId(companies[0]?.id || "");
+    setFormName("");
+    setFormIsHeadquarters(false);
     setFormLocality("Koramangala");
     setFormAddress("");
     setFormCity("Bengaluru");
@@ -119,6 +133,8 @@ export default function AdminOfficesPage() {
   const openEditModal = (office: OfficeResponse) => {
     setEditingOffice(office);
     setFormCompanyId(office.company_id);
+    setFormName(office.name || "");
+    setFormIsHeadquarters(Boolean(office.is_headquarters));
     setFormLocality(office.locality || "");
     setFormAddress(office.address || "");
     setFormCity(office.city || "Bengaluru");
@@ -159,6 +175,8 @@ export default function AdminOfficesPage() {
 
     const payload = {
       company_id: Number(formCompanyId),
+      name: formName.trim() || undefined,
+      is_headquarters: formIsHeadquarters,
       locality: formLocality.trim() || undefined,
       address: formAddress.trim() || undefined,
       city: formCity.trim() || "Bengaluru",
@@ -199,26 +217,34 @@ export default function AdminOfficesPage() {
     }
   };
 
+  const hasActiveFilters = Boolean((companyFilter && companyFilter !== "all") || localityFilter);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-emerald-400" />
-            Office Locations Management
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-indigo-400" />
+              Office Locations Management
+            </h2>
+            <Badge variant="indigo" size="sm">
+              {total} offices
+            </Badge>
+          </div>
           <p className="text-xs text-slate-400 mt-1">
             Maintain verified startup physical coordinates, hubs, and postal details across Bengaluru.
           </p>
         </div>
-        <button
+        <Button
           onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold hover:brightness-110 transition shadow-md shadow-emerald-500/20"
+          variant="primary"
+          size="sm"
+          icon={<Plus className="h-4 w-4" />}
         >
-          <Plus className="h-4 w-4" />
-          <span>Add Office Location</span>
-        </button>
+          Add Office Location
+        </Button>
       </div>
 
       {actionError && (
@@ -229,7 +255,7 @@ export default function AdminOfficesPage() {
       )}
 
       {/* Filter Toolbar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur-md">
         <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           <div className="sm:col-span-5">
             <select
@@ -238,9 +264,9 @@ export default function AdminOfficesPage() {
                 setCompanyFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 px-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
             >
-              <option value="">All Companies</option>
+              <option value="all">All Companies</option>
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -255,29 +281,28 @@ export default function AdminOfficesPage() {
               placeholder="Search by locality (e.g. Indiranagar, Bellandur)..."
               value={localityFilter}
               onChange={(e) => setLocalityFilter(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
             />
           </div>
 
           <div className="sm:col-span-2 flex items-center gap-2">
-            <button
+            <Button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition border border-slate-700"
+              variant="secondary"
+              size="sm"
+              icon={<Filter className="h-3.5 w-3.5" />}
+              className="w-full justify-center"
             >
-              <Filter className="h-3.5 w-3.5" />
-              <span>Filter</span>
-            </button>
-            {(companyFilter || localityFilter) && (
+              Filter
+            </Button>
+            {hasActiveFilters && (
               <button
                 type="button"
-                onClick={() => {
-                  setCompanyFilter("");
-                  setLocalityFilter("");
-                  setPage(1);
-                }}
-                className="px-2.5 py-2 rounded-xl text-xs text-slate-400 hover:text-white transition"
+                onClick={handleResetFilters}
+                className="p-2 rounded-xl border border-slate-700/70 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-xs"
+                title="Reset filters"
               >
-                Reset
+                <RotateCcw className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -287,30 +312,37 @@ export default function AdminOfficesPage() {
       {/* Table Container */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-800/40 text-slate-400 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-4">Company</th>
-                <th className="py-3 px-4">Locality & Address</th>
-                <th className="py-3 px-4">Coordinates (Lat, Lng)</th>
-                <th className="py-3 px-4">Postal Code</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider">
+                <th className="py-3.5 px-4 sm:px-6">Company</th>
+                <th className="py-3.5 px-4">Locality & Address</th>
+                <th className="py-3.5 px-4">Coordinates (Lat, Lng)</th>
+                <th className="py-3.5 px-4">Postal Code</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+            <tbody className="divide-y divide-slate-800/70 text-slate-300">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
-                    <div className="inline-flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-emerald-400" />
-                      <span>Loading office locations...</span>
+                  <td colSpan={5} className="py-16 text-center text-slate-400">
+                    <div className="inline-flex flex-col items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+                      <span className="text-xs">Loading office locations...</span>
                     </div>
                   </td>
                 </tr>
               ) : offices.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-500">
-                    No offices match the selected criteria.
+                  <td colSpan={5} className="p-8">
+                    <EmptyState
+                      variant="dark"
+                      icon={<MapPin className="h-6 w-6" />}
+                      title="No office locations found"
+                      description="No offices match your search and filter criteria."
+                      actionLabel={hasActiveFilters ? "Reset Filters" : "Add Office"}
+                      onAction={hasActiveFilters ? handleResetFilters : openCreateModal}
+                    />
                   </td>
                 </tr>
               ) : (
@@ -320,30 +352,42 @@ export default function AdminOfficesPage() {
                     companies.find((c) => c.id === office.company_id)?.name ||
                     `Company #${office.company_id}`;
                   return (
-                    <tr key={office.id} className="hover:bg-slate-800/30 transition">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                    <tr key={office.id} className="hover:bg-slate-800/40 transition">
+                      <td className="py-4 px-4 sm:px-6 font-bold text-white text-sm">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-slate-500 shrink-0" />
                           <span>{compName}</span>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-emerald-400">
-                          {office.locality || "Bengaluru"}
-                        </span>
-                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-indigo-400">
+                            {office.locality || "Bengaluru"}
+                          </span>
+                          {office.name && (
+                            <span className="text-[11px] text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded-md font-normal border border-slate-700/50">
+                              {office.name}
+                            </span>
+                          )}
+                          {office.is_headquarters && (
+                            <Badge variant="indigo" size="sm">
+                              HQ
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-1">
                           {office.address || "Address not specified"}
                         </p>
                       </td>
 
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-300">
+                      <td className="py-4 px-4 font-mono text-[11px] text-slate-300">
                         {office.latitude != null && office.longitude != null ? (
                           <a
                             href={`https://www.openstreetmap.org/?mlat=${office.latitude}&mlon=${office.longitude}#map=16/${office.latitude}/${office.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-slate-300 hover:text-emerald-400 transition"
+                            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 transition"
                             title="View on OpenStreetMap"
                           >
                             <span>
@@ -352,19 +396,19 @@ export default function AdminOfficesPage() {
                             <ExternalLink className="h-2.5 w-2.5 text-slate-500" />
                           </a>
                         ) : (
-                          <span className="text-slate-500">Not set</span>
+                          <span className="text-slate-600">Not set</span>
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 text-slate-400">
+                      <td className="py-4 px-4 text-slate-400 font-mono text-xs">
                         {office.postal_code || "560xxx"}
                       </td>
 
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center gap-2">
+                      <td className="py-4 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
                           <button
                             onClick={() => openEditModal(office)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
                             title="Edit Office"
                           >
                             <Edit className="h-4 w-4" />
@@ -374,7 +418,7 @@ export default function AdminOfficesPage() {
                               setDeleteTarget(office);
                               setForceDelete(false);
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition"
                             title="Delete Office"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -390,7 +434,7 @@ export default function AdminOfficesPage() {
         </div>
 
         {/* Pagination Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-800 bg-slate-900/60 text-xs text-slate-400">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-400">
           <div>
             Showing{" "}
             <span className="font-semibold text-white">
@@ -406,7 +450,7 @@ export default function AdminOfficesPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+              className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 transition"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -416,7 +460,7 @@ export default function AdminOfficesPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+              className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 transition"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -426,16 +470,16 @@ export default function AdminOfficesPage() {
 
       {/* Add / Edit Office Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-emerald-400" />
+                <MapPin className="h-5 w-5 text-indigo-400" />
                 {editingOffice ? "Edit Office Location" : "Add Bengaluru Office"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -452,13 +496,13 @@ export default function AdminOfficesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-semibold text-slate-300">
-                    Company <span className="text-emerald-400">*</span>
+                    Company <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={formCompanyId}
                     required
                     onChange={(e) => setFormCompanyId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                   >
                     <option value="" disabled>Select Company</option>
                     {companies.map((c) => (
@@ -469,9 +513,35 @@ export default function AdminOfficesPage() {
                   </select>
                 </div>
 
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Office Name / Tag <span className="text-slate-500 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Headquarters - Koramangala Campus"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                  />
+                </div>
+
+                <div className="space-y-1 sm:col-span-2 flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="is_headquarters"
+                    checked={formIsHeadquarters}
+                    onChange={(e) => setFormIsHeadquarters(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="is_headquarters" className="text-xs text-slate-300 cursor-pointer">
+                    Mark as Corporate Headquarters (HQ)
+                  </label>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300">
-                    Locality / Tech Hub <span className="text-emerald-400">*</span>
+                    Locality / Tech Hub <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -479,7 +549,7 @@ export default function AdminOfficesPage() {
                     placeholder="e.g. Koramangala, Indiranagar"
                     value={formLocality}
                     onChange={(e) => setFormLocality(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                   />
                 </div>
 
@@ -490,7 +560,7 @@ export default function AdminOfficesPage() {
                     placeholder="e.g. 560034"
                     value={formPostalCode}
                     onChange={(e) => setFormPostalCode(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition font-mono"
                   />
                 </div>
 
@@ -501,13 +571,13 @@ export default function AdminOfficesPage() {
                     placeholder="Building, street, tech park..."
                     value={formAddress}
                     onChange={(e) => setFormAddress(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300">
-                    Latitude <span className="text-slate-500">(12.70 - 13.25)</span>
+                    Latitude <span className="text-slate-500 font-mono font-normal">(12.70 - 13.25)</span>
                   </label>
                   <input
                     type="number"
@@ -515,13 +585,13 @@ export default function AdminOfficesPage() {
                     placeholder="12.9352"
                     value={formLatitude}
                     onChange={(e) => setFormLatitude(e.target.value === "" ? "" : Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition font-mono"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300">
-                    Longitude <span className="text-slate-500">(77.35 - 77.85)</span>
+                    Longitude <span className="text-slate-500 font-mono font-normal">(77.35 - 77.85)</span>
                   </label>
                   <input
                     type="number"
@@ -529,27 +599,28 @@ export default function AdminOfficesPage() {
                     placeholder="77.6245"
                     value={formLongitude}
                     onChange={(e) => setFormLongitude(e.target.value === "" ? "" : Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition font-mono"
                   />
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-medium text-slate-300 hover:bg-slate-800 transition"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={modalSaving}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold hover:brightness-110 transition disabled:opacity-50"
+                  variant="primary"
+                  size="sm"
+                  loading={modalSaving}
                 >
-                  {modalSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <span>{editingOffice ? "Update Office" : "Add Office"}</span>
-                </button>
+                  {editingOffice ? "Update Office" : "Add Office"}
+                </Button>
               </div>
             </form>
           </div>
@@ -558,7 +629,7 @@ export default function AdminOfficesPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl">
             <div className="flex items-start gap-3">
               <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -573,7 +644,7 @@ export default function AdminOfficesPage() {
                   </span>
                   ?
                 </p>
-                <div className="mt-3 p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+                <div className="mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300">
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -590,25 +661,26 @@ export default function AdminOfficesPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setDeleteTarget(null);
                   setForceDelete(false);
                 }}
-                className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-medium text-slate-300 hover:bg-slate-800 transition"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                disabled={deleting}
+                variant="danger"
+                size="sm"
+                loading={deleting}
                 onClick={confirmDelete}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition disabled:opacity-50"
               >
-                {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                <span>Delete Office</span>
-              </button>
+                Delete Office
+              </Button>
             </div>
           </div>
         </div>

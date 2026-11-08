@@ -5,6 +5,9 @@ import {
   MapPin,
   Briefcase,
   ArrowRight,
+  Building2,
+  Sparkles,
+  Compass,
 } from "lucide-react";
 import { FilterState } from "@/types";
 
@@ -13,6 +16,12 @@ interface HeroSearchProps {
   onFilterChange: (filters: FilterState) => void;
   onSearchSubmit: () => void;
   totalJobsCount: number;
+  stats?: {
+    total_approved_companies: number;
+    total_office_locations: number;
+    active_job_openings: number;
+    total_vacancies: number;
+  } | null;
   loading?: boolean;
 }
 
@@ -21,93 +30,129 @@ export function HeroSearch({
   onFilterChange,
   onSearchSubmit,
   totalJobsCount,
+  stats,
   loading = false,
 }: HeroSearchProps) {
-  const quickPills = [
+  const quickSkills = [
     { label: "Python", query: "Python" },
     { label: "React", query: "React" },
     { label: "Golang", query: "Golang" },
-    { label: "Java", query: "Java" },
-    { label: "Kubernetes", query: "Kubernetes" },
     { label: "TypeScript", query: "TypeScript" },
+    { label: "Kubernetes", query: "Kubernetes" },
+    { label: "AI / ML", query: "AI" },
+    { label: "Next.js", query: "Next.js" },
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-emerald-50/20 to-white pt-12 pb-16 border-b border-slate-100">
-      {/* Decorative background grid pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.06] pointer-events-none" />
+    <section className="relative overflow-hidden bg-[#080D18] text-white pt-14 pb-20 sm:pt-20 sm:pb-24 border-b border-slate-800">
+      {/* ========================================================= */}
+      {/* 1. PHOTOGRAPHIC BACKGROUND WITH DARK OVERLAY              */}
+      {/* ========================================================= */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-hero-bg pointer-events-none"
+        style={{
+          backgroundImage: "url('/images/bengaluru-tech-office.jpg')",
+        }}
+      />
+      {/* Dark charcoal and black translucent gradient overlay ensuring high contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#080D18]/80 via-[#080D18]/88 to-[#080D18]/96 pointer-events-none" />
+      {/* Subtle warm orange & slate atmospheric glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Hero header */}
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/90 bg-emerald-100/60 px-3.5 py-1 text-xs font-semibold text-emerald-800 backdrop-blur-sm">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Bengaluru Tech Corridor Directory</span>
-            <span className="text-emerald-500">•</span>
-            <span className="text-emerald-700 font-bold">FastAPI + PostgreSQL 18.6 Live</span>
-          </div>
-
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-            Discover Startup Opportunities Across{" "}
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent">
-              Bengaluru
-            </span>
-          </h1>
-
-          <p className="text-lg text-slate-600 sm:text-xl">
-            Explore tech startups by neighborhood corridor—from Koramangala and HSR Layout to
-            Indiranagar, Bellandur, and JP Nagar. Find your next role on the map.
-          </p>
+      {/* ========================================================= */}
+      {/* 2. HERO CONTENT CONTAINER (CENTERED COMPOSITION)           */}
+      {/* ========================================================= */}
+      <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
+        {/* Small Eyebrow Label */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/80 px-4 py-1.5 text-xs font-semibold text-slate-300 backdrop-blur-md shadow-sm mb-6">
+          <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+          <span>Explore Bengaluru&apos;s Tech Ecosystem</span>
         </div>
 
-        {/* Search Bar Container */}
-        <div className="mt-10 max-w-4xl mx-auto">
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xl shadow-slate-200/50 backdrop-blur-sm">
+        {/* Main Heading */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12] mb-5">
+          Discover Bengaluru&apos;s
+          <span className="block mt-1 text-orange-500">
+            Startup &amp; Technology Opportunities
+          </span>
+        </h1>
+
+        {/* Supporting Description */}
+        <p className="text-sm sm:text-base lg:text-lg text-[#CBD5E1] font-normal leading-relaxed max-w-2xl mx-auto mb-8">
+          Explore technology companies, discover office locations and find exciting job
+          opportunities across Bengaluru.
+        </p>
+
+        {/* Primary and Secondary CTA Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3.5 mb-10">
+          <a
+            href="#map-section"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-600 active:scale-95 transition-all duration-150 cursor-pointer"
+          >
+            <Compass className="h-4 w-4 text-white" />
+            <span>Explore Startup Map</span>
+            <ArrowRight className="h-4 w-4 ml-0.5" />
+          </a>
+
+          <a
+            href="#job-listings"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-xs sm:text-sm font-bold text-white hover:bg-white/20 hover:border-white/40 active:scale-95 transition-all duration-150 backdrop-blur-sm cursor-pointer"
+          >
+            <Briefcase className="h-4 w-4 text-slate-300" />
+            <span>Browse Jobs</span>
+          </a>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 3. SEARCH INTERFACE                                       */}
+        {/* ========================================================= */}
+        <div className="max-w-4xl mx-auto mb-14 text-left">
+          <div className="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-3.5 sm:p-4 shadow-2xl shadow-black/60 backdrop-blur-xl">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 onSearchSubmit();
               }}
-              className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center"
+              className="grid grid-cols-1 gap-2.5 sm:grid-cols-12 sm:items-center"
             >
-              {/* Role / Skill Search */}
-              <div className="relative md:col-span-5 flex items-center">
-                <Search className="absolute left-3.5 h-5 w-5 text-slate-400" />
+              {/* Role / Tech Stack search */}
+              <div className="relative sm:col-span-5 flex items-center">
+                <Search className="absolute left-3.5 h-4 w-4 text-slate-400 shrink-0 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Job title, tech stack (e.g. Python, React)..."
+                  placeholder="Job title, keywords, or tech stack..."
                   value={filters.keyword}
                   onChange={(e) =>
                     onFilterChange({ ...filters, keyword: e.target.value })
                   }
-                  className="w-full rounded-xl border-0 bg-slate-50/80 py-3 pl-11 pr-3 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800/90 py-2.5 pl-10 pr-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:border-orange-500 focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
                 />
               </div>
 
-              {/* Locality Hub Filter */}
-              <div className="relative md:col-span-4 flex items-center">
-                <MapPin className="absolute left-3.5 h-5 w-5 text-emerald-600" />
+              {/* Corridor / Locality Select */}
+              <div className="relative sm:col-span-4 flex items-center">
+                <MapPin className="absolute left-3.5 h-4 w-4 text-orange-400 shrink-0 pointer-events-none" />
                 <select
                   value={filters.locality}
                   onChange={(e) =>
                     onFilterChange({ ...filters, locality: e.target.value })
                   }
-                  className="w-full appearance-none rounded-xl border-0 bg-slate-50/80 py-3 pl-11 pr-8 text-sm font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800/90 py-2.5 pl-10 pr-8 text-xs sm:text-sm text-white focus:border-orange-500 focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer"
                 >
-                  <option value="">All Bengaluru Hubs</option>
+                  <option value="">All Bengaluru Corridors</option>
                   <option value="Koramangala">Koramangala</option>
                   <option value="Indiranagar">Indiranagar</option>
+                  <option value="HSR Layout">HSR Layout</option>
                   <option value="Bellandur">Bellandur / ORR</option>
+                  <option value="Whitefield">Whitefield</option>
                   <option value="JP Nagar">JP Nagar</option>
                   <option value="Marathahalli">Marathahalli</option>
-                  <option value="HSR Layout">HSR Layout</option>
-                  <option value="Whitefield">Whitefield</option>
                 </select>
               </div>
 
-              {/* Employment / Role Type */}
-              <div className="relative md:col-span-3 flex items-center">
-                <Briefcase className="absolute left-3.5 h-4 w-4 text-slate-400" />
+              {/* Employment Type Select */}
+              <div className="relative sm:col-span-3 flex items-center">
+                <Briefcase className="absolute left-3.5 h-4 w-4 text-slate-400 shrink-0 pointer-events-none" />
                 <select
                   value={filters.roleType}
                   onChange={(e) =>
@@ -116,7 +161,7 @@ export function HeroSearch({
                       roleType: e.target.value,
                     })
                   }
-                  className="w-full appearance-none rounded-xl border-0 bg-slate-50/80 py-3 pl-9 pr-3 text-sm font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800/90 py-2.5 pl-10 pr-8 text-xs sm:text-sm text-white focus:border-orange-500 focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 transition cursor-pointer"
                 >
                   <option value="all">All Employment Types</option>
                   <option value="full-time">Full-Time</option>
@@ -126,18 +171,18 @@ export function HeroSearch({
                 </select>
               </div>
 
-              {/* Submit CTA and Quick Filters */}
-              <div className="md:col-span-12 flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">Quick Skills:</span>
-                  {quickPills.map((pill) => (
+              {/* Bottom Quick Skills + Submit Action */}
+              <div className="sm:col-span-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-800 mt-1">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                  <span className="font-semibold text-slate-300 text-[11px]">Quick Filters:</span>
+                  {quickSkills.map((pill) => (
                     <button
                       key={pill.label}
                       type="button"
                       onClick={() =>
                         onFilterChange({ ...filters, keyword: pill.query })
                       }
-                      className="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700 transition hover:bg-emerald-100 hover:text-emerald-800"
+                      className="rounded-lg bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-slate-700/80 transition hover:bg-orange-500 hover:text-white hover:border-orange-500 cursor-pointer"
                     >
                       {pill.label}
                     </button>
@@ -147,7 +192,7 @@ export function HeroSearch({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-700 active:scale-95 disabled:opacity-60"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-orange-500/25 hover:bg-orange-600 active:scale-95 disabled:opacity-60 transition cursor-pointer"
                 >
                   <span>{loading ? "Searching..." : `Search ${totalJobsCount} Roles`}</span>
                   <ArrowRight className="h-4 w-4" />
@@ -157,23 +202,54 @@ export function HeroSearch({
           </div>
         </div>
 
-        {/* Live Ecosystem Stats Bar */}
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4 max-w-4xl mx-auto">
-          <div className="rounded-xl border border-slate-200/80 bg-white/70 p-4 text-center backdrop-blur-sm">
-            <div className="text-2xl font-bold text-slate-900">8+</div>
-            <div className="text-xs font-medium text-slate-500">Startup Corridors</div>
-          </div>
-          <div className="rounded-xl border border-slate-200/80 bg-white/70 p-4 text-center backdrop-blur-sm">
-            <div className="text-2xl font-bold text-emerald-600">8 Verified</div>
-            <div className="text-xs font-medium text-slate-500">PostgreSQL Startups</div>
-          </div>
-          <div className="rounded-xl border border-slate-200/80 bg-white/70 p-4 text-center backdrop-blur-sm">
-            <div className="text-2xl font-bold text-slate-900">Leaflet Map</div>
-            <div className="text-xs font-medium text-slate-500">Verified Coordinates</div>
-          </div>
-          <div className="rounded-xl border border-slate-200/80 bg-white/70 p-4 text-center backdrop-blur-sm">
-            <div className="text-2xl font-bold text-indigo-600">FastAPI</div>
-            <div className="text-xs font-medium text-slate-500">REST API v1</div>
+        {/* ========================================================= */}
+        {/* 4. PLATFORM STATISTICS (COMPACT HORIZONTAL BAR)           */}
+        {/* ========================================================= */}
+        <div className="pt-6 border-t border-slate-800/80 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
+            {/* Metric 1: Verified Companies */}
+            <div className="pt-3 sm:pt-0 sm:px-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs mb-1">
+                <Building2 className="h-3.5 w-3.5 text-orange-400" />
+                <span className="font-semibold uppercase tracking-wider text-[11px]">Verified Companies</span>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {stats !== null && stats !== undefined ? stats.total_approved_companies : "—"}
+              </div>
+            </div>
+
+            {/* Metric 2: Mapped Offices */}
+            <div className="pt-3 sm:pt-0 sm:px-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs mb-1">
+                <Compass className="h-3.5 w-3.5 text-orange-400" />
+                <span className="font-semibold uppercase tracking-wider text-[11px]">Mapped Offices</span>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {stats !== null && stats !== undefined ? stats.total_office_locations : "—"}
+              </div>
+            </div>
+
+            {/* Metric 3: Active Job Openings */}
+            <div className="pt-3 sm:pt-0 sm:px-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs mb-1">
+                <Briefcase className="h-3.5 w-3.5 text-orange-400" />
+                <span className="font-semibold uppercase tracking-wider text-[11px]">Active Job Openings</span>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {stats !== null && stats !== undefined ? stats.active_job_openings : "—"}
+              </div>
+            </div>
+
+            {/* Metric 4: Total Vacancies */}
+            <div className="pt-3 sm:pt-0 sm:px-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs mb-1">
+                <Sparkles className="h-3.5 w-3.5 text-orange-400" />
+                <span className="font-semibold uppercase tracking-wider text-[11px]">Total Vacancies</span>
+              </div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {stats !== null && stats !== undefined ? stats.total_vacancies : "—"}
+              </div>
+            </div>
           </div>
         </div>
       </div>

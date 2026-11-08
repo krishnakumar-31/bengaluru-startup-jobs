@@ -8,11 +8,23 @@ import {
   XCircle,
   Database,
   RefreshCw,
-  Loader2,
   ShieldCheck,
+  Download,
+  FileSpreadsheet,
+  Layers,
+  Building2,
+  MapPin,
+  Briefcase,
+  X,
 } from "lucide-react";
-import { adminPreviewImport, adminConfirmImport } from "@/lib/admin-api";
+import {
+  adminPreviewImport,
+  adminConfirmImport,
+  adminDownloadImportTemplate,
+} from "@/lib/admin-api";
 import { ImportPreviewResponse, ImportConfirmResponse } from "@/types/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function AdminImportsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -22,9 +34,14 @@ export default function AdminImportsPage() {
   const [previewData, setPreviewData] = useState<ImportPreviewResponse | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmResult, setConfirmResult] = useState<ImportConfirmResponse | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  const handleDownloadTemplate = () => {
+    adminDownloadImportTemplate();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -67,6 +84,11 @@ export default function AdminImportsPage() {
     }
   };
 
+  const handleOpenConfirmModal = () => {
+    if (!previewData || previewData.accepted_count === 0) return;
+    setIsConfirmModalOpen(true);
+  };
+
   const runConfirm = async () => {
     if (!previewData?.raw_accepted_json) return;
 
@@ -75,11 +97,51 @@ export default function AdminImportsPage() {
       setConfirmError(null);
       const res = await adminConfirmImport(previewData.raw_accepted_json);
       setConfirmResult(res);
+      setIsConfirmModalOpen(false);
     } catch (err: unknown) {
       setConfirmError(err instanceof Error ? err.message : "Failed to ingest accepted records");
     } finally {
       setConfirming(false);
     }
+  };
+
+  // CSV formula injection protection: escape values starting with =, +, -, @
+  const sanitizeCsvValue = (val: string): string => {
+    if (!val) return '""';
+    let clean = String(val);
+    if (/^[=+\-@]/.test(clean)) {
+      clean = `'${clean}`;
+    }
+    return `"${clean.replace(/"/g, '""')}"`;
+  };
+
+  const downloadInvalidRowsReport = () => {
+    if (!previewData) return;
+    const invalidItems = previewData.items.filter((item) => !item.valid);
+    if (invalidItems.length === 0) {
+      alert("No invalid rows to export.");
+      return;
+    }
+
+    const headers = ["Row Number", "Company Name", "Locality", "Job Title", "Validation Issues"];
+    const rows = invalidItems.map((item) => [
+      sanitizeCsvValue(String(item.row_number ?? "")),
+      sanitizeCsvValue(item.company_name || ""),
+      sanitizeCsvValue(item.locality || ""),
+      sanitizeCsvValue(item.job_title || ""),
+      sanitizeCsvValue(item.issues.join("; ")),
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `import_invalid_rows_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const resetAll = () => {
@@ -88,22 +150,40 @@ export default function AdminImportsPage() {
     setPreviewError(null);
     setConfirmResult(null);
     setConfirmError(null);
+    setIsConfirmModalOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <UploadCloud className="h-6 w-6 text-emerald-400" />
-          Batch Data Import & Verification
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Upload bulk startup directories and job feeds in CSV or JSON format. Every record is strictly validated before database insertion.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <UploadCloud className="h-6 w-6 text-indigo-400" />
+              Unified CSV Data Ingestion
+            </h2>
+            <Badge variant="indigo" size="sm">
+              Schema v2.0
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Import bulk Bengaluru startups, physical offices, and active job vacancies using the standard 35-column schema.
+          </p>
+        </div>
+
+        <Button
+          onClick={handleDownloadTemplate}
+          variant="secondary"
+          size="sm"
+          icon={<Download className="h-4 w-4 text-indigo-400" />}
+          className="self-start sm:self-auto"
+        >
+          Download Standard Template (.csv)
+        </Button>
       </div>
 
       {/* Confirmation Success Banner */}
@@ -118,19 +198,19 @@ export default function AdminImportsPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-              <span className="text-[11px] text-slate-400 block">Companies Created / Updated</span>
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+              <span className="text-[11px] text-slate-400 block">Companies Created / Reused</span>
               <span className="text-lg font-bold text-emerald-400">
                 +{confirmResult.companies_created} / ~{confirmResult.companies_updated}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-              <span className="text-[11px] text-slate-400 block">Offices Created / Updated</span>
-              <span className="text-lg font-bold text-teal-400">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+              <span className="text-[11px] text-slate-400 block">Offices Created / Reused</span>
+              <span className="text-lg font-bold text-indigo-400">
                 +{confirmResult.offices_created} / ~{confirmResult.offices_updated}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center col-span-2 sm:col-span-1">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-center col-span-2 sm:col-span-1">
               <span className="text-[11px] text-slate-400 block">Jobs Created / Updated</span>
               <span className="text-lg font-bold text-cyan-400">
                 +{confirmResult.jobs_created} / ~{confirmResult.jobs_updated}
@@ -139,13 +219,14 @@ export default function AdminImportsPage() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <button
+            <Button
               onClick={resetAll}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition border border-slate-700"
+              variant="secondary"
+              size="sm"
+              icon={<RefreshCw className="h-3.5 w-3.5" />}
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Import Another File</span>
-            </button>
+              Import Another File
+            </Button>
           </div>
         </div>
       )}
@@ -157,7 +238,7 @@ export default function AdminImportsPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/40 transition cursor-pointer text-center group"
+            className="flex flex-col items-center justify-center p-10 rounded-2xl border-2 border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-slate-850 transition cursor-pointer text-center group"
           >
             <input
               type="file"
@@ -166,16 +247,16 @@ export default function AdminImportsPage() {
               accept=".csv,.json"
               className="hidden"
             />
-            <div className="p-3 rounded-full bg-slate-800 group-hover:bg-emerald-500/10 text-slate-400 group-hover:text-emerald-400 transition mb-3">
-              <UploadCloud className="h-8 w-8" />
+            <div className="p-3.5 rounded-2xl bg-slate-800 group-hover:bg-indigo-500/10 text-slate-400 group-hover:text-indigo-400 transition mb-3">
+              <FileSpreadsheet className="h-8 w-8" />
             </div>
             <p className="text-sm font-semibold text-white">
               {file ? file.name : "Click to select or drag & drop CSV or JSON file"}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               {file
-                ? `${(file.size / 1024).toFixed(1)} KB — Ready for validation preview`
-                : "Supports structured Bengaluru startup records (.csv or .json)"}
+                ? `${(file.size / 1024).toFixed(1)} KB — Ready for strict validation preview`
+                : "Supports UTF-8 / UTF-8 BOM standard 35-column dataset (.csv or .json)"}
             </p>
           </div>
 
@@ -188,24 +269,16 @@ export default function AdminImportsPage() {
 
           {file && !previewData && (
             <div className="flex justify-end">
-              <button
+              <Button
                 type="button"
                 onClick={runPreview}
-                disabled={previewLoading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold hover:brightness-110 transition disabled:opacity-50 shadow-md shadow-emerald-500/20"
+                loading={previewLoading}
+                variant="primary"
+                size="md"
+                icon={<ShieldCheck className="h-4 w-4" />}
               >
-                {previewLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Validating Records...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Validate & Preview File</span>
-                  </>
-                )}
-              </button>
+                Validate & Preview Records
+              </Button>
             </div>
           )}
         </div>
@@ -214,25 +287,38 @@ export default function AdminImportsPage() {
       {/* Preview Section */}
       {previewData && !confirmResult && (
         <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 space-y-1 shadow-lg">
-              <span className="text-xs text-slate-400">Total Scanned Records</span>
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 space-y-1 shadow-lg">
+              <span className="text-[11px] text-slate-400 block font-medium">Total Scanned</span>
               <div className="text-2xl font-bold text-white">{previewData.total_records}</div>
             </div>
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-1 shadow-lg">
-              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" />
-                Validated & Accepted
+
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-1 shadow-lg">
+              <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Valid & Accepted
               </span>
               <div className="text-2xl font-bold text-emerald-300">{previewData.accepted_count}</div>
             </div>
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5 space-y-1 shadow-lg">
-              <span className="text-xs text-rose-400 font-semibold flex items-center gap-1.5">
-                <XCircle className="h-4 w-4" />
-                Rejected / Incomplete
+
+            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 space-y-1 shadow-lg">
+              <span className="text-[11px] text-rose-400 font-semibold flex items-center gap-1">
+                <XCircle className="h-3.5 w-3.5" />
+                Issues / Rejected
               </span>
               <div className="text-2xl font-bold text-rose-300">{previewData.rejected_count}</div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 space-y-1 shadow-lg">
+              <span className="text-[11px] text-indigo-400 font-semibold flex items-center gap-1">
+                <Layers className="h-3.5 w-3.5" />
+                Entities Scope
+              </span>
+              <div className="text-[11px] text-slate-300 pt-0.5 space-y-0.5">
+                <div>Companies: <span className="text-emerald-400 font-semibold">+{previewData.new_companies_count ?? 0}</span> | Reused: <span className="text-slate-400">~{previewData.existing_companies_count ?? 0}</span></div>
+                <div>Offices: <span className="text-indigo-400 font-semibold">+{previewData.new_offices_count ?? 0}</span> | Jobs: <span className="text-cyan-400 font-semibold">+{previewData.new_jobs_count ?? 0}</span></div>
+              </div>
             </div>
           </div>
 
@@ -244,79 +330,130 @@ export default function AdminImportsPage() {
           )}
 
           {/* Action Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border border-slate-800 bg-slate-900/80">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md">
             <div className="text-xs text-slate-300">
               {previewData.accepted_count > 0 ? (
                 <span>
                   Ready to ingest{" "}
-                  <strong className="text-emerald-400">{previewData.accepted_count} verified records</strong>{" "}
-                  into PostgreSQL.
+                  <strong className="text-emerald-400">{previewData.accepted_count} validated records</strong>{" "}
+                  into PostgreSQL atomically.
                 </span>
               ) : (
                 <span className="text-rose-400">
-                  No records met the Bengaluru verification requirements. Please fix issues and re-upload.
+                  No records met the verification requirements. Download the report below to review errors.
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <button
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+              {previewData.rejected_count > 0 && (
+                <Button
+                  type="button"
+                  onClick={downloadInvalidRowsReport}
+                  variant="outline"
+                  size="sm"
+                  icon={<Download className="h-3.5 w-3.5 text-rose-400" />}
+                  className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+                >
+                  Download Invalid Rows ({previewData.rejected_count})
+                </Button>
+              )}
+
+              <Button
                 type="button"
                 onClick={resetAll}
-                className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-medium text-slate-300 hover:bg-slate-800 transition"
+                variant="ghost"
+                size="sm"
               >
-                Cancel
-              </button>
-              <button
+                Reset
+              </Button>
+
+              <Button
                 type="button"
-                onClick={runConfirm}
-                disabled={confirming || previewData.accepted_count === 0}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold hover:brightness-110 transition disabled:opacity-50 shadow-md shadow-emerald-500/20"
+                onClick={handleOpenConfirmModal}
+                disabled={previewData.accepted_count === 0}
+                variant="primary"
+                size="sm"
+                icon={<Database className="h-4 w-4" />}
               >
-                {confirming ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Ingesting into DB...</span>
-                  </>
-                ) : (
-                  <>
-                    <Database className="h-4 w-4" />
-                    <span>Confirm & Ingest Verified Records</span>
-                  </>
-                )}
-              </button>
+                Confirm & Ingest Verified Records
+              </Button>
             </div>
           </div>
 
           {/* Records Inspection Table */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-800/40 text-slate-400 font-semibold uppercase tracking-wider">
-                    <th className="py-3 px-4">Company Name</th>
-                    <th className="py-3 px-4">Locality</th>
-                    <th className="py-3 px-4">Job Title</th>
-                    <th className="py-3 px-4">Status</th>
+                  <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider">
+                    <th className="py-3 px-3 w-16">Row #</th>
+                    <th className="py-3 px-4">Company</th>
+                    <th className="py-3 px-4">Office Location</th>
+                    <th className="py-3 px-4">Job Opening</th>
+                    <th className="py-3 px-4 text-center">Status</th>
                     <th className="py-3 px-4">Validation Notes / Errors</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-slate-800/70 text-slate-300">
                   {previewData.items.map((item, idx) => (
                     <tr
-                      key={idx}
-                      className={item.valid ? "hover:bg-slate-800/30" : "bg-rose-500/5 hover:bg-rose-500/10"}
+                      key={`import-row-${item.row_number ?? idx}`}
+                      className={item.valid ? "hover:bg-slate-800/40 transition" : "bg-rose-500/5 hover:bg-rose-500/10 transition"}
                     >
-                      <td className="py-3 px-4 font-semibold text-white">
-                        {item.company_name}
+                      <td className="py-3 px-3 font-mono text-slate-500">
+                        {item.row_number ?? idx + 1}
                       </td>
+
+                      <td className="py-3 px-4 font-bold text-white">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                          <span>{item.company_name}</span>
+                          {item.is_duplicate_company ? (
+                            <Badge variant="indigo" size="sm">
+                              Reusing Existing
+                            </Badge>
+                          ) : (
+                            <Badge variant="success" size="sm">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+
                       <td className="py-3 px-4 text-slate-300">
-                        {item.locality || "—"}
+                        {item.locality || item.office_name ? (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                            <span>{item.locality || item.office_name}</span>
+                            {item.is_duplicate_office && (
+                              <span className="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">
+                                Reused
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 italic">No office row</span>
+                        )}
                       </td>
+
                       <td className="py-3 px-4 text-slate-300">
-                        {item.job_title || "—"}
+                        {item.job_title ? (
+                          <div className="flex items-center gap-1.5">
+                            <Briefcase className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                            <span>{item.job_title}</span>
+                            {item.vacancies != null && (
+                              <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-1.5 py-0.2 rounded font-medium">
+                                {item.vacancies} {item.vacancies === 1 ? "vac" : "vacs"}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 italic">Company/Office only</span>
+                        )}
                       </td>
-                      <td className="py-3 px-4">
+
+                      <td className="py-3 px-4 text-center">
                         {item.valid ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                             <CheckCircle2 className="h-3 w-3" /> Valid
@@ -327,26 +464,94 @@ export default function AdminImportsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+
+                      <td className="py-3 px-4 text-slate-400">
                         {item.issues && item.issues.length > 0 ? (
-                          <div className="space-y-1">
-                            {item.issues.map((issue, iIdx) => (
-                              <span
-                                key={iIdx}
-                                className="inline-block text-[10px] text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 mr-1"
-                              >
-                                {issue}
-                              </span>
+                          <div className="space-y-0.5 text-rose-300 text-[11px]">
+                            {item.issues.map((issue, i) => (
+                              <div key={i} className="flex items-center gap-1">
+                                <span className="h-1 w-1 rounded-full bg-rose-400" />
+                                <span>{issue}</span>
+                              </div>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-emerald-400">All checks passed</span>
+                          <span className="text-slate-500 text-[11px]">Validated successfully</span>
                         )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {isConfirmModalOpen && previewData && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 text-white shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Database className="h-5 w-5 text-indigo-400" />
+                Confirm PostgreSQL Ingestion
+              </h3>
+              <button
+                onClick={() => setIsConfirmModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              You are about to insert{" "}
+              <strong className="text-emerald-400 font-semibold">{previewData.accepted_count} valid records</strong>{" "}
+              into the live PostgreSQL database.
+            </p>
+
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs text-slate-300 space-y-2">
+              <div className="flex justify-between">
+                <span>New Companies to Create:</span>
+                <span className="font-bold text-emerald-400">+{previewData.new_companies_count ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Existing Companies to Reuse:</span>
+                <span className="font-bold text-slate-400">~{previewData.existing_companies_count ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Offices to Create:</span>
+                <span className="font-bold text-indigo-400">+{previewData.new_offices_count ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Jobs to Create:</span>
+                <span className="font-bold text-cyan-400">+{previewData.new_jobs_count ?? 0}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsConfirmModalOpen(false)}
+                disabled={confirming}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={confirming}
+                onClick={runConfirm}
+                icon={<Database className="h-4 w-4" />}
+              >
+                Execute Database Ingestion
+              </Button>
             </div>
           </div>
         </div>

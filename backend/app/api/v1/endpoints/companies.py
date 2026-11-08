@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.company_service import CompanyService
-from app.schemas.company import CompanyResponse, PaginatedCompaniesResponse
+from app.schemas.company import CompanyResponse, PaginatedCompaniesResponse, CompanyDetailResponse
 from app.schemas.office import OfficeResponse
 
 router = APIRouter()
@@ -35,8 +35,8 @@ def list_companies(
     )
 
 
-@router.get("/{company_id}", response_model=CompanyResponse, summary="Get Company by ID")
-def get_company(company_id: int, db: Session = Depends(get_db)) -> CompanyResponse:
+@router.get("/{company_id}", response_model=CompanyDetailResponse, summary="Get Company by ID")
+def get_company(company_id: int, db: Session = Depends(get_db)) -> CompanyDetailResponse:
     """Retrieve detailed information for a specific company by its ID."""
     service = CompanyService(db)
     company = service.get_company(company_id)
@@ -45,7 +45,7 @@ def get_company(company_id: int, db: Session = Depends(get_db)) -> CompanyRespon
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Company with ID {company_id} not found",
         )
-    return CompanyResponse.model_validate(company)
+    return CompanyDetailResponse.model_validate(company)
 
 
 @router.get("/{company_id}/offices", response_model=List[OfficeResponse], summary="Get Company Offices")

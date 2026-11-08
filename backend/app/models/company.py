@@ -14,8 +14,11 @@ class Company(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    cin: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     website: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     company_size: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -24,8 +27,9 @@ class Company(Base, TimestampMixin):
         Boolean, default=False, server_default=text("false"), nullable=False, index=True
     )
 
-    # Backward compatibility synonym for schemas/code using website_url
+    # Backward compatibility synonyms
     website_url = synonym("website")
+    company_description = synonym("description")
 
     # Relationships
     offices: Mapped[List["Office"]] = relationship(

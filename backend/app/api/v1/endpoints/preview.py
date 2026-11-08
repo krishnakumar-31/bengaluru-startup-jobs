@@ -20,22 +20,22 @@ preview_router = APIRouter()
     description=(
         "Temporary, read-only endpoint to preview processed MCA startup records "
         "and geocoded coordinates without modifying the PostgreSQL database. "
-        "Supports batch selection (20 or 100) and filtering by locality, industry, and geocoding source."
+        "Supports batch selection (20, 100, or 500) and filtering by locality, industry, classification, and geocoding source."
     ),
 )
 def get_mca_preview_companies(
     response: Response,
     file_path: Optional[str] = Query(
         None,
-        description="Optional relative path to CSV file within data directory (e.g. data/output/mca_bengaluru_100_records.csv)",
+        description="Optional relative path to CSV file within data directory (e.g. data/output/mca_bengaluru_500_records.csv)",
     ),
     batch: Optional[int] = Query(
         None,
-        description="Batch selection shortcut: 20 or 100 (e.g. ?batch=100 loads 100-record test batch)",
+        description="Batch selection shortcut: 20, 100, or 500 (e.g. ?batch=500 loads 500-candidate dataset)",
     ),
     dataset: Optional[str] = Query(
         None,
-        description="Dataset selection: '20' or '100'",
+        description="Dataset selection: '20', '100', or '500'",
     ),
     locality: Optional[str] = Query(
         None,
@@ -49,9 +49,13 @@ def get_mca_preview_companies(
         None,
         description="Filter by geocoding source ('nominatim_osm', 'locality_centroid', 'pincode_centroid')",
     ),
+    entity_classification: Optional[str] = Query(
+        None,
+        description="Filter by classification: 'startup', 'established_company', 'uncertain_for_review'",
+    ),
     include_duplicates: bool = Query(
         False,
-        description="Whether to include records detected as duplicates of the 20-record batch",
+        description="Whether to include records detected as duplicates of prior batches",
     ),
 ) -> List[MCAPreviewCompany]:
     """
@@ -65,12 +69,16 @@ def get_mca_preview_companies(
         locality=locality,
         industry=industry,
         geocoding_source=geocoding_source,
+        entity_classification=entity_classification,
         include_duplicates=include_duplicates,
     )
 
     address_level_count = sum(1 for item in items if item.geocoding_source == "nominatim_osm")
     locality_centroid_count = sum(1 for item in items if item.geocoding_source != "nominatim_osm")
     manual_verif_count = sum(1 for item in items if not item.is_verified)
+    startup_count = sum(1 for item in items if item.entity_classification == "startup")
+    established_count = sum(1 for item in items if item.entity_classification == "established_company")
+    uncertain_count = sum(1 for item in items if item.entity_classification == "uncertain_for_review")
 
     # Add useful response headers for frontend/client inspection
     response.headers["X-Total-Records"] = str(total)
@@ -79,6 +87,9 @@ def get_mca_preview_companies(
     response.headers["X-Address-Level-Count"] = str(address_level_count)
     response.headers["X-Locality-Centroid-Count"] = str(locality_centroid_count)
     response.headers["X-Manual-Verification-Count"] = str(manual_verif_count)
+    response.headers["X-Startup-Count"] = str(startup_count)
+    response.headers["X-Established-Count"] = str(established_count)
+    response.headers["X-Uncertain-Count"] = str(uncertain_count)
 
     return items
 
@@ -91,11 +102,12 @@ def get_mca_preview_companies(
 )
 def get_mca_preview_summary(
     file_path: Optional[str] = Query(None, description="Optional relative path to CSV file"),
-    batch: Optional[int] = Query(None, description="Batch selection: 20 or 100"),
-    dataset: Optional[str] = Query(None, description="Dataset identifier: '20' or '100'"),
+    batch: Optional[int] = Query(None, description="Batch selection: 20, 100, or 500"),
+    dataset: Optional[str] = Query(None, description="Dataset identifier: '20', '100', or '500'"),
     locality: Optional[str] = Query(None, description="Optional locality filter"),
     industry: Optional[str] = Query(None, description="Optional industry filter"),
     geocoding_source: Optional[str] = Query(None, description="Optional geocoding source filter"),
+    entity_classification: Optional[str] = Query(None, description="Optional classification filter"),
 ) -> MCAPreviewSummary:
     """
     Returns structured summary with geocoding breakdown and items.
@@ -107,4 +119,5 @@ def get_mca_preview_summary(
         locality=locality,
         industry=industry,
         geocoding_source=geocoding_source,
+        entity_classification=entity_classification,
     )

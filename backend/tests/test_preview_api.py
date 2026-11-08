@@ -1,4 +1,5 @@
 import tempfile
+import shutil
 from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
@@ -7,10 +8,68 @@ from app.main import app
 from app.db.session import SessionLocal
 from app.models import Company, Office, Job
 
+ARCHIVE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "archive" / "mca_500_candidate_backup"
+OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "output"
+
 client = TestClient(app)
 
 
-def test_preview_mca_companies_endpoint():
+@pytest.fixture
+def with_preview_csvs():
+    """Temporarily supplies archived preview datasets to test CSV parser and classification logic."""
+    copied_files = []
+    files_to_copy = [
+        "mca_bengaluru_20_records.csv",
+        "mca_bengaluru_100_records.csv",
+        "mca_bengaluru_500_records.csv",
+        "mca_processing_summary.json",
+        "mca_100_processing_summary.json",
+        "mca_500_processing_summary.json",
+    ]
+    for fn in files_to_copy:
+        src = ARCHIVE_DIR / fn
+        dst = OUTPUT_DIR / fn
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+            copied_files.append(dst)
+
+    yield
+
+    for dst in copied_files:
+        if dst.exists():
+            try:
+                dst.unlink()
+            except Exception:
+                pass
+
+
+def test_preview_endpoints_graceful_empty_when_archived():
+    """Verify that when datasets are archived, preview endpoints return graceful empty list and 200 OK."""
+    for fn in ["mca_bengaluru_20_records.csv", "mca_bengaluru_100_records.csv", "mca_bengaluru_500_records.csv"]:
+        target = OUTPUT_DIR / fn
+        if target.exists():
+            try:
+                target.unlink()
+            except Exception:
+                pass
+
+    res = client.get("/api/v1/preview/mca-companies")
+    assert res.status_code == 200
+    assert res.json() == []
+
+    res_500 = client.get("/api/v1/preview/mca-companies?batch=500")
+    assert res_500.status_code == 200
+    assert res_500.json() == []
+
+    res_summary = client.get("/api/v1/preview/mca-companies/summary")
+    assert res_summary.status_code == 200
+    summary = res_summary.json()
+    assert summary["file_name"] == "None (Archived)"
+    assert summary["total_records"] == 0
+    assert summary["valid_records_count"] == 0
+
+
+def test_preview_mca_companies_endpoint(with_preview_csvs):
     """
     Test GET /api/v1/preview/mca-companies returns 20 valid MCA startup records
     without touching PostgreSQL.
@@ -66,7 +125,7 @@ def test_preview_mca_companies_endpoint():
     db.close()
 
 
-def test_preview_mca_companies_filtering():
+def test_preview_mca_companies_filtering(with_preview_csvs):
     """
     Test filtering by locality and geocoding source.
     """
@@ -93,7 +152,7 @@ def test_preview_mca_companies_filtering():
     assert fintech_items[0]["name"] == "Happi-cred Solutions"
 
 
-def test_preview_mca_summary_endpoint():
+def test_preview_mca_summary_endpoint(with_preview_csvs):
     """
     Test GET /api/v1/preview/mca-companies/summary returns full summary metadata.
     """
@@ -151,7 +210,7 @@ def test_preview_handles_invalid_coordinates_safely():
             temp_csv.unlink()
 
 
-def test_preview_mca_batch_100_selection():
+def test_preview_mca_batch_100_selection(with_preview_csvs):
     """
     Test selecting the 100-record batch via ?batch=100 or ?file_path.
     Verifies that candidate records are unverified and summary contains batch statistics.
@@ -200,4 +259,90 @@ def test_preview_mca_batch_100_selection():
     db = SessionLocal()
     assert db.query(Company).count() == initial_company_count
     db.close()
+
+
+def test_preview_mca_batch_500_and_classification(with_preview_csvs):
+    """
+    Test selecting 500-candidate dataset via ?batch=500 and filtering by entity classification.
+    Verifies that all 500 records are unverified candidates, geocoding precision is separated,
+    and PostgreSQL database remains untouched.
+    """
+    db = SessionLocal()
+    initial_company_count = db.query(Company).count()
+    initial_office_count = db.query(Office).count()
+    initial_job_count = db.query(Job).count()
+    db.close()
+
+    # 1. Query full 500 candidate dataset
+    res = client.get("/api/v1/preview/mca-companies?batch=500")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 500
+
+    # Headers verification
+    assert res.headers.get("X-Total-Records") == "500"
+    assert res.headers.get("X-Valid-Coordinates") == "500"
+    assert res.headers.get("X-Manual-Verification-Count") == "500"
+    assert res.headers.get("X-Startup-Count") == "185"
+    assert res.headers.get("X-Established-Count") == "85"
+    assert res.headers.get("X-Uncertain-Count") == "230"
+    assert res.headers.get("X-Address-Level-Count") == "114"
+    assert res.headers.get("X-Locality-Centroid-Count") == "386"
+
+    # Verify candidate properties
+    for item in data:
+        assert item["is_verified"] is False
+        assert item["candidate_status"] == "needs_manual_verification"
+        assert item["entity_classification"] in ["startup", "established_company", "uncertain_for_review"]
+        assert 12.70 <= item["latitude"] <= 13.25
+        assert 77.35 <= item["longitude"] <= 77.85
+
+    # 2. Query classification filter: startup
+    res_startup = client.get("/api/v1/preview/mca-companies?batch=500&entity_classification=startup")
+    assert res_startup.status_code == 200
+    startups = res_startup.json()
+    assert len(startups) == 185
+    for item in startups:
+        assert item["entity_classification"] == "startup"
+
+    # 3. Query classification filter: established_company
+    res_est = client.get("/api/v1/preview/mca-companies?batch=500&entity_classification=established_company")
+    assert res_est.status_code == 200
+    established = res_est.json()
+    assert len(established) == 85
+    for item in established:
+        assert item["entity_classification"] == "established_company"
+
+    # 4. Query classification filter: uncertain_for_review
+    res_unc = client.get("/api/v1/preview/mca-companies?batch=500&entity_classification=uncertain_for_review")
+    assert res_unc.status_code == 200
+    uncertain = res_unc.json()
+    assert len(uncertain) == 230
+    for item in uncertain:
+        assert item["entity_classification"] == "uncertain_for_review"
+
+    # 5. Query batch=500 summary endpoint
+    res_summary = client.get("/api/v1/preview/mca-companies/summary?batch=500")
+    assert res_summary.status_code == 200
+    summary = res_summary.json()
+    assert summary["file_name"] == "mca_bengaluru_500_records.csv"
+    assert summary["valid_records_count"] == 500
+    assert summary["duplicate_records_count"] == 97
+    assert summary["failed_records_count"] == 21
+    assert summary["address_level_count"] == 114
+    assert summary["locality_centroid_count"] == 386
+    assert summary["startup_count"] == 185
+    assert summary["established_company_count"] == 85
+    assert summary["uncertain_for_review_count"] == 230
+    assert summary["manual_verification_count"] == 500
+    assert summary["database_modified"] is False
+
+    # 6. Verify PostgreSQL database is strictly untouched
+    db = SessionLocal()
+    assert db.query(Company).count() == initial_company_count
+    assert db.query(Office).count() == initial_office_count
+    assert db.query(Job).count() == initial_job_count
+    db.close()
+
 
