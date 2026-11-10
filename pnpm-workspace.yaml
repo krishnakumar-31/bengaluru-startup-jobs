@@ -2,5 +2,11 @@ packages:
   - frontend
 allowBuilds:
   unrs-resolver: true
+  "@prisma/engines": true
+  "@prisma/client": true
+  prisma: true
+  esbuild: true
 minimumReleaseAgeExclude:
   - lucide-react@1.64.0
+
+

@@ -27,9 +27,27 @@ function parseJwtPayload(token: string): JwtPayload | null {
 }
 
 /**
- * Validates session against the FastAPI backend verification endpoint.
+ * Validates session against the Next.js auth endpoint with FastAPI fallback.
  */
-async function validateBackendSession(cookieValue: string): Promise<boolean> {
+async function validateBackendSession(cookieValue: string, requestUrl?: string): Promise<boolean> {
+  // 1. Primary: Validate against local Next.js Route Handler
+  if (requestUrl) {
+    try {
+      const localMeUrl = new URL("/api/v1/admin/auth/me", requestUrl).toString();
+      const localRes = await fetch(localMeUrl, {
+        headers: {
+          Cookie: `admin_session=${cookieValue}`,
+        },
+        cache: "no-store",
+      });
+      if (localRes.status === 200) return true;
+      if (localRes.status === 401 || localRes.status === 403) return false;
+    } catch {
+      // Fall through to FastAPI fallback
+    }
+  }
+
+  // 2. Fallback: Validate against FastAPI backend
   try {
     const backendUrl =
       process.env.INTERNAL_BACKEND_URL ||
@@ -106,7 +124,7 @@ export async function middleware(request: NextRequest) {
 
   // 3. For /admin/login: if user has an unexpired token, verify with backend before redirecting
   if (pathname === "/admin/login") {
-    const isBackendValid = await validateBackendSession(rawToken);
+    const isBackendValid = await validateBackendSession(rawToken, request.url);
     if (isBackendValid) {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
@@ -118,7 +136,7 @@ export async function middleware(request: NextRequest) {
 
   // 4. Root /admin or /admin/ redirect
   if (pathname === "/admin" || pathname === "/admin/") {
-    const isBackendValid = await validateBackendSession(rawToken);
+    const isBackendValid = await validateBackendSession(rawToken, request.url);
     if (isBackendValid) {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
@@ -135,7 +153,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get("purpose") === "prefetch";
 
   if (!isPrefetch) {
-    const isBackendValid = await validateBackendSession(rawToken);
+    const isBackendValid = await validateBackendSession(rawToken, request.url);
     if (!isBackendValid) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("expired", "1");

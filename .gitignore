@@ -125,3 +125,4 @@ temp/
 *.db
 *.dump
 *.bak
+data/backups/

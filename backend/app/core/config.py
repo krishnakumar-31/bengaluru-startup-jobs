@@ -46,7 +46,25 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     def assemble_db_connection(cls, v: Union[str, None], info) -> str:
         if isinstance(v, str) and v.strip():
-            return v
+            url = v.strip()
+            parsed = urllib.parse.urlsplit(url)
+            query_params = urllib.parse.parse_qs(parsed.query)
+            schema = query_params.pop("schema", None)
+
+            scheme = parsed.scheme
+            if scheme in ("postgresql", "postgres"):
+                scheme = "postgresql+psycopg2"
+
+            new_query = []
+            for qk, qvs in query_params.items():
+                for qv in qvs:
+                    new_query.append(f"{qk}={qv}")
+            if schema and schema[0]:
+                new_query.append(f"options=-csearch_path%3D{urllib.parse.quote_plus(schema[0])}")
+
+            query_str = "&".join(new_query)
+            return urllib.parse.urlunsplit((scheme, parsed.netloc, parsed.path, query_str, parsed.fragment))
+
         data = info.data
         user = urllib.parse.quote_plus(str(data.get("POSTGRES_USER", "postgres")))
         pwd = urllib.parse.quote_plus(str(data.get("POSTGRES_PASSWORD", "postgres")))

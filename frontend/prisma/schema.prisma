@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique(map: "ix_admin_users_username") @db.VarChar(100)
+  hashedPassword String    @map("hashed_password") @db.VarChar(255)
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
+  tokenVersion   Int       @default(1) @map("token_version")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([id], map: "ix_admin_users_id")
+  @@map("admin_users")
+}
+
+model AlembicVersion {
+  versionNum String @id(map: "alembic_version_pkc") @map("version_num") @db.VarChar(32)
+
+  @@map("alembic_version")
+}
+
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  slug        String   @unique(map: "ix_companies_slug") @db.VarChar(255)
+  description String?
+  website     String?  @db.VarChar(500)
+  logoUrl     String?  @map("logo_url") @db.VarChar(500)
+  industry    String?  @db.VarChar(100)
+  companySize String?  @map("company_size") @db.VarChar(50)
+  foundedYear Int?     @map("founded_year")
+  isVerified  Boolean  @default(false) @map("is_verified")
+  cin         String?  @db.VarChar(50)
+  email       String?  @db.VarChar(255)
+  phone       String?  @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  offices Office[]
+  jobs    Job[]
+
+  @@index([id], map: "ix_companies_id")
+  @@index([name], map: "ix_companies_name")
+  @@index([industry], map: "ix_companies_industry")
+  @@index([isVerified], map: "ix_companies_is_verified")
+  @@index([cin], map: "ix_companies_cin")
+  @@map("companies")
+}
+
+model Office {
+  id             Int      @id @default(autoincrement())
+  companyId      Int      @map("company_id")
+  name           String?  @db.VarChar(255)
+  address        String?  @db.VarChar(500)
+  locality       String?  @db.VarChar(120)
+  city           String   @default("Bengaluru") @db.VarChar(100)
+  state          String   @default("Karnataka") @db.VarChar(100)
+  postalCode     String?  @map("postal_code") @db.VarChar(20)
+  latitude       Float?
+  longitude      Float?
+  isHeadquarters Boolean  @default(false) @map("is_headquarters")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  jobs    Job[]
+
+  @@index([id], map: "ix_offices_id")
+  @@index([companyId], map: "ix_offices_company_id")
+  @@index([locality], map: "ix_offices_locality")
+  @@index([city], map: "ix_offices_city")
+  @@index([postalCode], map: "ix_offices_postal_code")
+  @@index([latitude, longitude], map: "idx_offices_lat_lng")
+  @@map("offices")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Job {
+  id              Int       @id @default(autoincrement())
+  companyId       Int       @map("company_id")
+  officeId        Int?      @map("office_id")
+  title           String    @db.VarChar(255)
+  slug            String    @unique(map: "ix_jobs_slug") @db.VarChar(255)
+  description     String
+  employmentType  String    @default("full-time") @map("employment_type") @db.VarChar(50)
+  experienceLevel String?   @default("mid") @map("experience_level") @db.VarChar(50)
+  experienceMin   Int?      @map("experience_min")
+  experienceMax   Int?      @map("experience_max")
+  salaryMin       Int?      @map("salary_min")
+  salaryMax       Int?      @map("salary_max")
+  currency        String?   @default("INR") @db.VarChar(10)
+  skills          String[]  @db.VarChar(100)
+  applicationUrl  String?   @map("application_url") @db.VarChar(500)
+  jobSourceUrl    String?   @map("job_source_url") @db.VarChar(500)
+  status          String    @default("active") @db.VarChar(50)
+  workMode        String    @default("in-office") @map("work_mode") @db.VarChar(50)
+  vacancies       Int       @default(1)
+  postedAt        DateTime? @default(now()) @map("posted_at") @db.Timestamptz(6)
+  expiresAt       DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  office     Office?     @relation(fields: [officeId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  jobSources JobSource[]
+
+  @@unique([companyId, title, officeId], map: "uq_jobs_company_title_office")
+  @@index([id], map: "ix_jobs_id")
+  @@index([companyId], map: "ix_jobs_company_id")
+  @@index([officeId], map: "ix_jobs_office_id")
+  @@index([title], map: "ix_jobs_title")
+  @@index([employmentType], map: "ix_jobs_employment_type")
+  @@index([experienceLevel], map: "ix_jobs_experience_level")
+  @@index([status], map: "ix_jobs_status")
+  @@index([workMode], map: "ix_jobs_work_mode")
+  @@index([postedAt], map: "ix_jobs_posted_at")
+  @@index([expiresAt], map: "ix_jobs_expires_at")
+  @@map("jobs")
+}
+
+model JobSource {
+  id             Int       @id @default(autoincrement())
+  jobId          Int       @map("job_id")
+  sourceName     String    @map("source_name") @db.VarChar(100)
+  sourceUrl      String    @map("source_url") @db.VarChar(500)
+  lastVerifiedAt DateTime? @map("last_verified_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([jobId, sourceUrl], map: "uq_job_sources_job_source_url")
+  @@index([id], map: "ix_job_sources_id")
+  @@index([jobId], map: "ix_job_sources_job_id")
+  @@index([sourceName], map: "ix_job_sources_source_name")
+  @@index([lastVerifiedAt], map: "ix_job_sources_last_verified_at")
+  @@map("job_sources")
+}
